@@ -88,7 +88,12 @@ async def _audit_via_mcp(samples_dir: Path, filenames: list[str]) -> list[dict]:
                 audit = audit_file(
                     llm, source["filename"], source["language"], source["numbered_code"]
                 )
-                results.append({"filename": source["filename"], "audit": audit})
+                results.append({
+                    "filename": source["filename"],
+                    "language": source["language"],
+                    "code": source.get("code", ""),
+                    "audit": audit,
+                })
     return results
 
 

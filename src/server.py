@@ -96,6 +96,7 @@ def read_source(filename: str) -> dict:
         "language": _language_of(file),
         "line_count": len(lines),
         "numbered_code": numbered,
+        "code": text,
     }
 
 

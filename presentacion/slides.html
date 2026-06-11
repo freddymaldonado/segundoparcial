@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guardrails para Vibe Coding - Grupo 3</title>
+    <style>
+      :root {
+        --bg: #0b1120;
+        --ink: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --crit: #f87171;
+        --alta: #fb923c;
+        --media: #fbbf24;
+        --baja: #4ade80;
+        --card: #1e293b;
+        --line: #334155;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg); color: var(--ink); overflow: hidden;
+      }
+      .slide {
+        position: absolute; inset: 0; display: none;
+        flex-direction: column; justify-content: center; align-items: center;
+        padding: 5vh 8vw; text-align: center; gap: 1.5rem;
+        animation: fade .4s ease;
+      }
+      .slide.active { display: flex; }
+      @keyframes fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; } }
+
+      .kicker { color: var(--accent); font-size: 1rem; letter-spacing: .25em;
+                text-transform: uppercase; font-weight: 700; }
+      h1 { font-size: clamp(2.2rem, 6vw, 4rem); line-height: 1.05; font-weight: 800; }
+      h2 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; }
+      .sub { color: var(--muted); font-size: clamp(1rem, 2.2vw, 1.4rem); max-width: 60ch; }
+      .big { font-size: clamp(1.3rem, 3vw, 2rem); max-width: 22ch; line-height: 1.3; }
+      .accent { color: var(--accent); }
+
+      /* Flujo */
+      .flow { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+              justify-content: center; max-width: 90vw; }
+      .node { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+              padding: 1rem 1.3rem; min-width: 150px; }
+      .node .t { font-weight: 700; font-size: 1.05rem; }
+      .node .d { color: var(--muted); font-size: .82rem; margin-top: .25rem; }
+      .node.guard { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+      .arrow { color: var(--accent); font-size: 1.8rem; }
+
+      /* Métricas */
+      .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; }
+      .metric { background: var(--card); border: 1px solid var(--line);
+                border-radius: 16px; padding: 1.5rem 1.8rem; min-width: 150px; }
+      .metric .n { font-size: 3rem; font-weight: 800; }
+      .metric .l { color: var(--muted); font-size: .85rem; text-transform: uppercase;
+                   letter-spacing: .08em; margin-top: .3rem; }
+      .metric.crit .n { color: var(--crit); }
+      .metric.alta .n { color: var(--alta); }
+      .metric.media .n { color: var(--media); }
+      .metric.deps .n { color: var(--accent); }
+
+      /* Comparativa Mythos */
+      .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1000px; }
+      .col { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+             padding: 1.8rem; text-align: left; }
+      .col h3 { font-size: 1.3rem; margin-bottom: 1rem; }
+      .col ul { list-style: none; display: flex; flex-direction: column; gap: .7rem; }
+      .col li { color: var(--muted); font-size: 1rem; padding-left: 1.4rem; position: relative; }
+      .col li::before { content: "›"; position: absolute; left: 0; color: var(--accent);
+                        font-weight: 800; }
+
+      .code { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+              padding: 1.4rem 1.8rem; font-family: ui-monospace, monospace; text-align: left;
+              font-size: clamp(.85rem, 1.6vw, 1.1rem); line-height: 1.7; max-width: 90vw;
+              overflow: auto; }
+      .code .c { color: #64748b; }
+      .code .bad { color: var(--crit); }
+      .tag { display: inline-block; background: rgba(56,189,248,.15); color: var(--accent);
+             border-radius: 999px; padding: .3rem .9rem; font-size: .85rem; font-weight: 700; }
+      .pills { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; }
+      .pill { background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+              padding: .5rem 1.1rem; font-size: .95rem; }
+
+      /* Navegación */
+      .nav { position: fixed; bottom: 1.2rem; right: 1.5rem; display: flex; gap: .5rem;
+             align-items: center; color: var(--muted); font-size: .85rem; z-index: 10; }
+      .nav button { background: var(--card); border: 1px solid var(--line); color: var(--ink);
+                    border-radius: 8px; width: 36px; height: 36px; cursor: pointer; font-size: 1.1rem; }
+      .progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent);
+                  transition: width .3s; z-index: 10; }
+      .hint { position: fixed; bottom: 1.2rem; left: 1.5rem; color: #475569; font-size: .8rem; }
+
+      /* Diagrama MCP (UML sequence con Mermaid) */
+      .diagram-slide { padding: 3vh 3vw; gap: 1rem; }
+      .diagram { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+                 padding: 1.5rem 2rem; width: 96vw; height: 82vh; overflow: auto;
+                 display: flex; align-items: center; justify-content: center; }
+      .diagram .mermaid { display: flex; justify-content: center; align-items: center;
+                          width: 100%; height: 100%; }
+      .diagram svg { width: 100%; height: auto; max-width: 100%; max-height: 100%; }
+
+      /* Estructura de archivos */
+      .tree { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+              padding: 1.6rem 2.2rem; text-align: left; font-family: ui-monospace, monospace;
+              font-size: clamp(.85rem, 1.7vw, 1.15rem); line-height: 1.85; }
+      .tree .dir { color: var(--accent); font-weight: 700; }
+      .tree .file { color: var(--ink); }
+      .tree .role { color: var(--muted); }
+      .tree .r-server .file { color: var(--accent); font-weight: 700; }
+      .tree .r-cli .file    { color: var(--alta); font-weight: 700; }
+      .tree .r-llm .file    { color: var(--media); font-weight: 700; }
+      .tree .r-web .file    { color: var(--baja); font-weight: 700; }
+      .legend { display: flex; gap: 1.4rem; flex-wrap: wrap; justify-content: center;
+                font-size: .9rem; color: var(--muted); }
+      .legend span::before { content: "\25CF"; margin-right: .4rem; }
+      .legend .l-server::before { color: var(--accent); }
+      .legend .l-cli::before    { color: var(--alta); }
+      .legend .l-llm::before    { color: var(--media); }
+      .legend .l-web::before    { color: var(--baja); }
+    </style>
+  </head>
+  <body>
+    <div class="progress" id="progress"></div>
+
+    <!-- 1. Portada -->
+    <section class="slide active">
+      <div class="kicker">Grupo 3 &middot; IA Aplicada a la Defensa Agentic</div>
+      <h1>Guardrails para<br /><span class="accent">Vibe Coding</span></h1>
+      <p class="sub">Un auditor que lee código generado por IA y devuelve hallazgos
+      críticos antes de que ese código llegue a producción.</p>
+    </section>
+
+    <!-- 2. El problema -->
+    <section class="slide">
+      <div class="kicker">El problema</div>
+      <h2>La IA escribe código<br />a velocidad humana<span class="accent">x100</span></h2>
+      <p class="big">También hereda fallos de seguridad y
+      <span class="accent">dependencias que no existen.</span></p>
+    </section>
+
+    <!-- 3. Claude Mythos -->
+    <section class="slide">
+      <div class="kicker">Primeros 5 minutos &middot; Caso Claude Mythos</div>
+      <h2>El mismo poder que <span class="accent">parcha</span>,<br /> también <span class="accent">ataca</span></h2>
+      <p class="sub">Mythos es tan capaz que Anthropic no lo libera al público: solo a
+      grandes empresas, con acceso controlado, para parchar su software.</p>
+    </section>
+
+    <!-- 4. Comparativa Mythos -->
+    <section class="slide">
+      <div class="kicker">Paralelo: superficie de ataque / defensa</div>
+      <div class="cols">
+        <div class="col">
+          <h3>Claude Mythos</h3>
+          <ul>
+            <li>Modelo frontera, doble uso</li>
+            <li>Guardrail por <b>escasez</b>: acceso restringido</li>
+            <li>Protege limitando quién lo usa</li>
+            <li>Riesgo: el motor en sí</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Nuestra PoC</h3>
+          <ul>
+            <li>Arquitectura de control alrededor del LLM</li>
+            <li>Guardrail por <b>diseño</b>: tools acotados</li>
+            <li>Protege limitando qué puede hacer</li>
+            <li>Riesgo: el código que produce</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Diagrama de flujo -->
+    <section class="slide">
+      <div class="kicker">Arquitectura &middot; MCP real + LLM</div>
+      <div class="flow">
+        <div class="node"><div class="t">Archivos</div><div class="d">drag &amp; drop</div></div>
+        <span class="arrow">&rarr;</span>
+        <div class="node guard"><div class="t">Servidor MCP</div><div class="d">list / read / write</div></div>
+        <span class="arrow">&rarr;</span>
+        <div class="node"><div class="t">LLM</div><div class="d">análisis defensivo</div></div>
+        <span class="arrow">&rarr;</span>
+        <div class="node"><div class="t">Reporte</div><div class="d">hallazgos + fix</div></div>
+      </div>
+      <p class="sub">El servidor MCP <span class="accent">es el guardrail</span>: solo lee la
+      carpeta de muestras, solo escribe reportes y <b>nunca ejecuta</b> el código.</p>
+    </section>
+
+    <!-- 5b. Diagrama MCP detallado (UML sequence) -->
+    <section class="slide diagram-slide">
+      <div class="kicker">¿Cómo funciona MCP? &middot; diagrama de secuencia</div>
+      <div class="diagram">
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Usuario
+    participant W as WebApp (FastAPI)
+    participant C as Cliente MCP
+    participant S as Servidor MCP (Tools)
+    participant L as LLM
+
+    U->>W: Sube N archivos (POST /api/scan)
+    W->>W: Guarda en carpeta temporal aislada
+    W->>C: Inicia sesión MCP (stdio)
+    C->>S: initialize
+    C->>S: call_tool · list_targets()
+    S-->>C: [archivos, lenguaje, hash]
+    loop por cada archivo
+        C->>S: call_tool · read_source(file)
+        S-->>C: código numerado (no ejecuta)
+        C->>L: audit_file() · prompt auditor + código
+        Note over C,L: auditor.py · ÚNICO punto que usa el LLM
+        L-->>C: hallazgos JSON (severidad, CWE, fix)
+    end
+    C->>W: resultados agregados
+    W-->>U: resumen por severidad + hallazgos
+        </pre>
+      </div>
+    </section>
+
+    <!-- 5c. Estructura del código por rol -->
+    <section class="slide">
+      <div class="kicker">Estructura del código &middot; cada archivo, un rol</div>
+      <div class="tree">
+<span class="dir">src/</span><br />
+<span class="r-server">&nbsp;&nbsp;<span class="file">server.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="role"># Servidor MCP &mdash; el guardrail: lee, escribe, NO ejecuta</span></span><br />
+<span class="r-cli">&nbsp;&nbsp;<span class="file">client_demo.py</span><span class="role"># Cliente MCP (CLI) &mdash; orquesta servidor + LLM</span></span><br />
+<span class="r-llm">&nbsp;&nbsp;<span class="file">auditor.py</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="role"># Análisis con el LLM: prompt + parseo de hallazgos</span></span><br />
+<span class="r-web">&nbsp;&nbsp;<span class="file">webapp.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="role"># WebApp FastAPI + cliente MCP embebido</span></span><br />
+<span class="dir">web/</span><br />
+<span class="r-web">&nbsp;&nbsp;<span class="file">index.html</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="role"># Frontend drag &amp; drop + resumen por severidad</span></span><br />
+<span class="dir">samples-active/</span>&nbsp;&nbsp;<span class="role"># código "vibe-coded" de prueba (entrada)</span><br />
+<span class="dir">output/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="role"># reportes .md / .html generados (salida)</span>
+      </div>
+      <div class="legend">
+        <span class="l-server">Servidor MCP</span>
+        <span class="l-cli">Cliente MCP</span>
+        <span class="l-llm">Análisis LLM</span>
+        <span class="l-web">Web / Frontend</span>
+      </div>
+    </section>
+
+    <!-- 6. Los tools -->
+    <section class="slide">
+      <div class="kicker">Los tools se definen en <span class="accent">src/server.py</span></div>
+      <div class="code">
+<span class="c"># FastMCP convierte cada función decorada en un tool MCP</span><br />
+<span class="accent">@mcp.tool()</span><br />
+def <span class="accent">read_source</span>(filename: str) -&gt; dict:<br />
+&nbsp;&nbsp;file = _safe_resolve(filename, SAMPLES_DIR)&nbsp;&nbsp;<span class="c"># guardrail</span><br />
+&nbsp;&nbsp;...&nbsp;&nbsp;<span class="c"># lee y numera líneas — NUNCA ejecuta</span>
+      </div>
+      <p class="sub">El decorador <span class="accent">@mcp.tool()</span> expone nombre, firma y docstring
+      por el protocolo. El servidor solo permite esas operaciones.</p>
+    </section>
+
+    <!-- 6b. Detalle de cada tool -->
+    <section class="slide">
+      <div class="kicker">4 tools &middot; permisos mínimos por responsabilidad</div>
+      <div class="cols" style="grid-template-columns: 1fr 1fr; max-width: 1100px;">
+        <div class="col">
+          <h3 class="accent">list_targets()</h3>
+          <ul>
+            <li>Lista los archivos auditables</li>
+            <li>Devuelve lenguaje, tamaño y hash SHA-256</li>
+            <li>Solo lectura · jamás abre nada fuera de la carpeta</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3 class="accent">read_source(filename)</h3>
+          <ul>
+            <li>Lee el archivo con números de línea</li>
+            <li>Límite de 100 KB · no ejecuta el código</li>
+            <li>_safe_resolve bloquea path traversal</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3 class="accent">write_report(markdown)</h3>
+          <ul>
+            <li>Escribe el reporte en Markdown</li>
+            <li>Solo extensión .md permitida</li>
+            <li>Confinado a la carpeta output/</li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3 class="accent">write_html(html)</h3>
+          <ul>
+            <li>Escribe el reporte visual en HTML</li>
+            <li>Solo extensión .html permitida</li>
+            <li>Confinado a la carpeta output/</li>
+          </ul>
+        </div>
+      </div>
+      <p class="sub">El LLM razona; el servidor controla. Cada tool hace una sola cosa.</p>
+    </section>
+
+    <!-- 6c. Quién analiza con el LLM -->
+    <section class="slide">
+      <div class="kicker">¿Quién piensa? &middot; el LLM vive FUERA del guardrail</div>
+      <div class="cols" style="max-width: 1050px;">
+        <div class="col" style="border-color: var(--accent);">
+          <h3 class="accent">Servidor MCP &middot; server.py</h3>
+          <ul>
+            <li>Tools list_targets / read_source / write_*</li>
+            <li>Solo filesystem: leer texto y escribir reportes</li>
+            <li>No importa openai · no llama a la red</li>
+            <li><span class="accent">No piensa, no ejecuta</span></li>
+          </ul>
+        </div>
+        <div class="col" style="border-color: var(--media);">
+          <h3 style="color: var(--media);">Análisis LLM &middot; auditor.py</h3>
+          <ul>
+            <li><span class="accent">audit_file()</span> &mdash; lo invoca el cliente, no el server</li>
+            <li>SYSTEM_PROMPT de auditor defensivo (Blue Team)</li>
+            <li>client.chat.completions &rarr; hallazgos JSON</li>
+            <li>Razona solo sobre el texto que las tools ya leyeron</li>
+          </ul>
+        </div>
+      </div>
+      <p class="sub">Aunque el LLM alucinara una orden peligrosa, no puede ejecutarla:
+      solo existen las tools de leer/escribir, confinadas a sus carpetas.</p>
+    </section>
+
+    <!-- 7. Ejemplo de dato -->
+    <section class="slide">
+      <div class="kicker">Ejemplo de entrada</div>
+      <div class="code">
+<span class="c"># código "vibe-coded" sin pistas</span><br />
+import <span class="bad">pysecureparse</span>  <span class="c"># librería inexistente</span><br /><br />
+query = <span class="bad">f"SELECT * FROM users WHERE name='{user}'"</span><br />
+password = hashlib.<span class="bad">md5</span>(pwd).hexdigest()<br />
+<span class="bad">eval</span>(rule_expression)
+      </div>
+      <p class="sub">SQL injection, hash débil, ejecución dinámica y una dependencia
+      <span class="accent">alucinada</span>.</p>
+    </section>
+
+    <!-- 8. Métricas -->
+    <section class="slide">
+      <div class="kicker">Resultado del escaneo &middot; 3 archivos</div>
+      <div class="metrics">
+        <div class="metric"><div class="n">17</div><div class="l">Hallazgos</div></div>
+        <div class="metric crit"><div class="n">7</div><div class="l">Criticos</div></div>
+        <div class="metric alta"><div class="n">5</div><div class="l">Altos</div></div>
+        <div class="metric deps"><div class="n">2</div><div class="l">Deps falsas</div></div>
+      </div>
+      <p class="sub">Detectó la dependencia inventada <span class="accent">ai-secure-validator-pro</span>
+      y propuso la reescritura segura de cada fallo.</p>
+    </section>
+
+    <!-- 9. Validación humana -->
+    <section class="slide">
+      <div class="kicker">El guardrail final</div>
+      <h2>La IA recomienda.<br /><span class="accent">El humano valida.</span></h2>
+      <p class="sub">Revisamos cada hallazgo: qué acertó, qué omitió y dónde pudo alucinar.
+      La decisión final nunca es automática.</p>
+    </section>
+
+    <!-- 10. Demo -->
+    <section class="slide">
+      <div class="kicker">Vibe Coding usado</div>
+      <h2>Demo en vivo</h2>
+      <div class="pills">
+        <span class="pill">GitHub Copilot</span>
+        <span class="pill">Python + FastMCP</span>
+        <span class="pill">FastAPI</span>
+        <span class="pill">Docker</span>
+        <span class="pill">DigitalOcean</span>
+      </div>
+      <p class="sub">Drag &amp; drop &rarr; Escanear &rarr; resumen por severidad &rarr;
+      clic en cada archivo &rarr; <span class="accent">código resaltado con el análisis en su línea exacta</span>.</p>
+    </section>
+
+    <nav class="nav">
+      <button id="prev">&larr;</button>
+      <span id="counter">1 / 10</span>
+      <button id="next">&rarr;</button>
+    </nav>
+    <div class="hint">Flechas &larr; &rarr; o barra espaciadora &middot; F: pantalla completa</div>
+
+    <script src="mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "dark",
+        sequence: { useMaxWidth: true, actorFontSize: 17, messageFontSize: 15, noteFontSize: 15, width: 200, height: 55 },
+        themeVariables: {
+          background: "#1e293b",
+          primaryColor: "#1e293b",
+          primaryBorderColor: "#38bdf8",
+          primaryTextColor: "#e2e8f0",
+          lineColor: "#38bdf8",
+          actorBkg: "#0f172a",
+          actorBorder: "#38bdf8",
+          actorTextColor: "#e2e8f0",
+          signalColor: "#94a3b8",
+          signalTextColor: "#e2e8f0",
+          loopTextColor: "#4ade80",
+          noteBkgColor: "#334155",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        },
+      });
+    </script>
+    <script>
+      const slides = [...document.querySelectorAll(".slide")];
+      const progress = document.getElementById("progress");
+      const counter = document.getElementById("counter");
+      let i = 0;
+
+      function show(n) {
+        i = Math.max(0, Math.min(slides.length - 1, n));
+        slides.forEach((s, k) => s.classList.toggle("active", k === i));
+        progress.style.width = ((i + 1) / slides.length) * 100 + "%";
+        counter.textContent = `${i + 1} / ${slides.length}`;
+      }
+      document.getElementById("next").onclick = () => show(i + 1);
+      document.getElementById("prev").onclick = () => show(i - 1);
+      document.addEventListener("keydown", (e) => {
+        if (["ArrowRight", " ", "PageDown"].includes(e.key)) { e.preventDefault(); show(i + 1); }
+        else if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); show(i - 1); }
+        else if (e.key.toLowerCase() === "f") {
+          document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+        }
+      });
+      show(0);
+    </script>
+  </body>
+</html>

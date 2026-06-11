@@ -1,0 +1,15 @@
+# Secretos - NUNCA subir
+.env
+
+# Salidas generadas
+output/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+.vscode/

@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guardrails para Vibe Coding - Grupo 3</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f8fafc;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --card: #ffffff;
+        --line: #e2e8f0;
+        --crit: #dc2626;
+        --alta: #ea580c;
+        --media: #ca8a04;
+        --baja: #16a34a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg); color: var(--ink); margin: 0;
+        padding: 2rem 1rem; line-height: 1.55;
+      }
+      .wrap { max-width: 980px; margin: 0 auto; }
+      header {
+        background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff;
+        padding: 1.8rem 2rem; border-radius: 16px; margin-bottom: 1.5rem;
+      }
+      header h1 { margin: 0 0 .35rem; font-size: 1.5rem; }
+      header p { margin: 0; opacity: .85; font-size: .95rem; }
+
+      #dropzone {
+        border: 2.5px dashed #94a3b8; border-radius: 16px; background: var(--card);
+        padding: 2.5rem 1.5rem; text-align: center; cursor: pointer;
+        transition: border-color .15s, background .15s; margin-bottom: 1rem;
+      }
+      #dropzone.drag { border-color: #2563eb; background: #eff6ff; }
+      #dropzone .icon { font-size: 2.4rem; }
+      #dropzone h2 { margin: .5rem 0 .25rem; font-size: 1.1rem; }
+      #dropzone p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+      #filelist { list-style: none; padding: 0; margin: 0 0 1rem; }
+      #filelist li {
+        display: flex; align-items: center; justify-content: space-between;
+        background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+        padding: .6rem .9rem; margin-bottom: .5rem; font-size: .9rem;
+      }
+      #filelist .name { font-family: ui-monospace, monospace; }
+      #filelist .rm {
+        border: none; background: #fee2e2; color: #b91c1c; cursor: pointer;
+        border-radius: 6px; padding: .2rem .55rem; font-weight: 700;
+      }
+      .actions { display: flex; gap: .75rem; align-items: center; margin-bottom: 1.5rem; }
+      button.scan {
+        background: #2563eb; color: #fff; border: none; border-radius: 10px;
+        padding: .8rem 1.6rem; font-size: 1rem; font-weight: 700; cursor: pointer;
+      }
+      button.scan:disabled { background: #94a3b8; cursor: not-allowed; }
+      button.ghost {
+        background: transparent; border: 1px solid var(--line); color: var(--muted);
+        border-radius: 10px; padding: .8rem 1rem; cursor: pointer;
+      }
+      .status { color: var(--muted); font-size: .9rem; }
+
+      .metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: .75rem; margin: 1.5rem 0; }
+      .metric { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .9rem; text-align: center; }
+      .metric .n { font-size: 1.7rem; font-weight: 800; }
+      .metric .l { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+      .metric.total .n { color: var(--ink); }
+      .metric.crit .n { color: var(--crit); }
+      .metric.alta .n { color: var(--alta); }
+      .metric.media .n { color: var(--media); }
+      .metric.baja .n { color: var(--baja); }
+      .metric.deps .n { color: #7c3aed; }
+
+      .file { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.4rem; margin-bottom: 1.2rem; }
+      .file h2 { margin: 0 0 .4rem; font-size: 1.1rem; font-family: ui-monospace, monospace; }
+      .summary { color: var(--muted); font-style: italic; margin: 0 0 1rem; }
+      .finding { border-left: 4px solid var(--line); padding: .8rem 1rem; margin-bottom: .7rem; background: var(--bg); border-radius: 0 8px 8px 0; }
+      .finding.CRITICA { border-color: var(--crit); }
+      .finding.ALTA { border-color: var(--alta); }
+      .finding.MEDIA { border-color: var(--media); }
+      .finding.BAJA { border-color: var(--baja); }
+      .finding h3 { margin: 0 0 .5rem; font-size: .95rem; }
+      .badge { color: #fff; padding: .14rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 800; margin-right: .5rem; }
+      .badge.CRITICA { background: var(--crit); }
+      .badge.ALTA { background: var(--alta); }
+      .badge.MEDIA { background: var(--media); }
+      .badge.BAJA { background: var(--baja); }
+      .field { margin: .3rem 0; font-size: .9rem; }
+      .field b { color: #334155; }
+      code { background: #e2e8f0; padding: .12rem .4rem; border-radius: 4px; font-size: .82rem; word-break: break-word; }
+      .line { color: var(--muted); font-size: .8rem; font-weight: 400; }
+      .sub { margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--line); }
+      .sub h4 { margin: 0 0 .4rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+      .sub ul { margin: 0; padding-left: 1.2rem; }
+      .hidden { display: none; }
+      footer { text-align: center; color: #94a3b8; font-size: .82rem; margin-top: 2rem; }
+      .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e1; border-top-color: #2563eb; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; margin-right: .4rem; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Guardrails para Vibe Coding</h1>
+        <p>Grupo 3 &middot; Auditor de codigo generado por IA &middot; Servidor MCP + LLM</p>
+      </header>
+
+      <div id="dropzone">
+        <div class="icon">&#128228;</div>
+        <h2>Arrastra aqui tus archivos</h2>
+        <p>Formatos permitidos: .py y .js &middot; o haz clic para elegir</p>
+        <input id="fileinput" type="file" multiple accept=".py,.js" class="hidden" />
+      </div>
+
+      <ul id="filelist"></ul>
+
+      <div class="actions">
+        <button id="scanbtn" class="scan" disabled>Escanear</button>
+        <button id="clearbtn" class="ghost hidden">Limpiar</button>
+        <span id="status" class="status"></span>
+      </div>
+
+      <section id="metrics" class="metrics hidden"></section>
+      <section id="results"></section>
+    </div>
+
+    <script>
+      const dropzone = document.getElementById("dropzone");
+      const fileinput = document.getElementById("fileinput");
+      const filelist = document.getElementById("filelist");
+      const scanbtn = document.getElementById("scanbtn");
+      const clearbtn = document.getElementById("clearbtn");
+      const statusEl = document.getElementById("status");
+      const metricsEl = document.getElementById("metrics");
+      const resultsEl = document.getElementById("results");
+
+      let files = [];
+      const ALLOWED = [".py", ".js"];
+
+      function esc(s) {
+        return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+      function refreshList() {
+        filelist.innerHTML = files
+          .map(
+            (f, i) =>
+              `<li><span class="name">${esc(f.name)}</span>
+               <button class="rm" data-i="${i}">&times;</button></li>`
+          )
+          .join("");
+        scanbtn.disabled = files.length === 0;
+        clearbtn.classList.toggle("hidden", files.length === 0);
+      }
+      function addFiles(list) {
+        for (const f of list) {
+          const ext = f.name.slice(f.name.lastIndexOf(".")).toLowerCase();
+          if (ALLOWED.includes(ext) && !files.some((x) => x.name === f.name)) files.push(f);
+        }
+        refreshList();
+      }
+
+      dropzone.addEventListener("click", () => fileinput.click());
+      fileinput.addEventListener("change", (e) => addFiles(e.target.files));
+      ["dragover", "dragenter"].forEach((ev) =>
+        dropzone.addEventListener(ev, (e) => {
+          e.preventDefault();
+          dropzone.classList.add("drag");
+        })
+      );
+      ["dragleave", "drop"].forEach((ev) =>
+        dropzone.addEventListener(ev, (e) => {
+          e.preventDefault();
+          dropzone.classList.remove("drag");
+        })
+      );
+      dropzone.addEventListener("drop", (e) => addFiles(e.dataTransfer.files));
+      filelist.addEventListener("click", (e) => {
+        if (e.target.classList.contains("rm")) {
+          files.splice(Number(e.target.dataset.i), 1);
+          refreshList();
+        }
+      });
+      clearbtn.addEventListener("click", () => {
+        files = [];
+        refreshList();
+        metricsEl.classList.add("hidden");
+        metricsEl.innerHTML = "";
+        resultsEl.innerHTML = "";
+        statusEl.textContent = "";
+      });
+
+      scanbtn.addEventListener("click", async () => {
+        scanbtn.disabled = true;
+        statusEl.innerHTML = `<span class="spinner"></span>Analizando...`;
+        metricsEl.classList.add("hidden");
+        resultsEl.innerHTML = "";
+
+        const fd = new FormData();
+        files.forEach((f) => fd.append("files", f));
+        try {
+          const res = await fetch("/api/scan", { method: "POST", body: fd });
+          if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+          const data = await res.json();
+          renderMetrics(data.summary);
+          renderResults(data.results);
+          statusEl.textContent = "Listo.";
+        } catch (err) {
+          statusEl.textContent = "Error: " + err.message;
+        } finally {
+          scanbtn.disabled = files.length === 0;
+        }
+      });
+
+      function renderMetrics(s) {
+        const sev = s.por_severidad;
+        metricsEl.innerHTML = `
+          <div class="metric total"><div class="n">${s.total}</div><div class="l">Total</div></div>
+          <div class="metric crit"><div class="n">${sev.CRITICA}</div><div class="l">Critica</div></div>
+          <div class="metric alta"><div class="n">${sev.ALTA}</div><div class="l">Alta</div></div>
+          <div class="metric media"><div class="n">${sev.MEDIA}</div><div class="l">Media</div></div>
+          <div class="metric baja"><div class="n">${sev.BAJA}</div><div class="l">Baja</div></div>
+          <div class="metric deps"><div class="n">${s.dependencias_sospechosas}</div><div class="l">Deps</div></div>`;
+        metricsEl.classList.remove("hidden");
+      }
+
+      function renderResults(results) {
+        resultsEl.innerHTML = results
+          .map((r) => {
+            const a = r.audit;
+            const findings = (a.hallazgos || [])
+              .map(
+                (h) => `
+                <div class="finding ${esc(h.severidad)}">
+                  <h3><span class="badge ${esc(h.severidad)}">${esc(h.severidad)}</span>
+                    ${esc(h.titulo)}
+                    <span class="line">(linea ${esc(h.linea)}, ${esc(h.cwe || "N/A")})</span></h3>
+                  <div class="field"><b>Evidencia:</b> <code>${esc(h.evidencia)}</code></div>
+                  <div class="field"><b>Riesgo:</b> ${esc(h.explicacion)}</div>
+                  <div class="field"><b>Reescritura segura:</b> ${esc(h.reescritura_segura)}</div>
+                </div>`
+              )
+              .join("");
+            const deps = (a.dependencias_sospechosas || []).length
+              ? `<div class="sub"><h4>Dependencias sospechosas</h4><ul>${a.dependencias_sospechosas
+                  .map((d) => `<li><code>${esc(d.paquete)}</code> &mdash; ${esc(d.motivo)}</li>`)
+                  .join("")}</ul></div>`
+              : "";
+            const human = (a.requiere_validacion_humana || []).length
+              ? `<div class="sub"><h4>Requiere validacion humana</h4><ul>${a.requiere_validacion_humana
+                  .map((p) => `<li>${esc(p)}</li>`)
+                  .join("")}</ul></div>`
+              : "";
+            return `<article class="file">
+              <h2>${esc(r.filename)}</h2>
+              <p class="summary">${esc(a.resumen)}</p>
+              ${findings}${deps}${human}
+            </article>`;
+          })
+          .join("");
+      }
+    </script>
+  </body>
+</html>

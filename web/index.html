@@ -112,8 +112,8 @@
       <div id="dropzone">
         <div class="icon">&#128228;</div>
         <h2>Arrastra aqui tus archivos</h2>
-        <p>Formatos permitidos: .py y .js &middot; o haz clic para elegir</p>
-        <input id="fileinput" type="file" multiple accept=".py,.js" class="hidden" />
+        <p>Cualquier tipo de archivo &middot; o haz clic para elegir</p>
+        <input id="fileinput" type="file" multiple class="hidden" />
       </div>
 
       <ul id="filelist"></ul>
@@ -139,7 +139,6 @@
       const resultsEl = document.getElementById("results");
 
       let files = [];
-      const ALLOWED = [".py", ".js"];
 
       function esc(s) {
         return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -157,8 +156,7 @@
       }
       function addFiles(list) {
         for (const f of list) {
-          const ext = f.name.slice(f.name.lastIndexOf(".")).toLowerCase();
-          if (ALLOWED.includes(ext) && !files.some((x) => x.name === f.name)) files.push(f);
+          if (!files.some((x) => x.name === f.name)) files.push(f);
         }
         refreshList();
       }

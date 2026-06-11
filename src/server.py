@@ -20,8 +20,34 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SAMPLES_DIR = Path(os.getenv("AUDITOR_SAMPLES_DIR", BASE_DIR / "samples")).resolve()
 OUTPUT_DIR = BASE_DIR / "output"
 
-ALLOWED_EXTENSIONS = {".py": "python", ".js": "javascript"}
+# Mapa de extensiones a lenguaje para dar contexto al LLM.
+# Cualquier extension no listada se audita igual con lenguaje "texto".
+LANGUAGE_BY_EXT = {
+    ".py": "python",
+    ".js": "javascript",
+    ".ts": "typescript",
+    ".jsx": "javascript",
+    ".tsx": "typescript",
+    ".java": "java",
+    ".go": "go",
+    ".rb": "ruby",
+    ".php": "php",
+    ".c": "c",
+    ".cpp": "cpp",
+    ".cs": "csharp",
+    ".rs": "rust",
+    ".sh": "bash",
+    ".sql": "sql",
+    ".html": "html",
+    ".yml": "yaml",
+    ".yaml": "yaml",
+    ".json": "json",
+}
 MAX_FILE_BYTES = 100_000
+
+
+def _language_of(file: Path) -> str:
+    return LANGUAGE_BY_EXT.get(file.suffix.lower(), "texto")
 
 mcp = FastMCP("guardrails-auditor")
 
@@ -36,17 +62,16 @@ def _safe_resolve(path: str, root: Path) -> Path:
 
 @mcp.tool()
 def list_targets() -> list[dict]:
-    """Lista los archivos de codigo auditables en samples/ (lenguaje, tamano y hash)."""
+    """Lista los archivos auditables en samples/ (lenguaje, tamano y hash)."""
     targets = []
     for file in sorted(SAMPLES_DIR.iterdir()):
-        language = ALLOWED_EXTENSIONS.get(file.suffix)
-        if language is None:
+        if not file.is_file() or file.name.startswith("."):
             continue
         content = file.read_bytes()
         targets.append(
             {
                 "filename": file.name,
-                "language": language,
+                "language": _language_of(file),
                 "size_bytes": len(content),
                 "sha256": hashlib.sha256(content).hexdigest()[:16],
             }
@@ -56,19 +81,19 @@ def list_targets() -> list[dict]:
 
 @mcp.tool()
 def read_source(filename: str) -> dict:
-    """Devuelve el codigo fuente de un archivo de samples/ con numeros de linea."""
+    """Devuelve el contenido de un archivo de samples/ con numeros de linea."""
     file = _safe_resolve(filename, SAMPLES_DIR)
-    language = ALLOWED_EXTENSIONS.get(file.suffix)
-    if language is None or not file.is_file():
-        raise ValueError(f"Archivo no auditable: {filename}")
+    if not file.is_file():
+        raise ValueError(f"Archivo no encontrado: {filename}")
     if file.stat().st_size > MAX_FILE_BYTES:
         raise ValueError(f"Archivo demasiado grande: {filename}")
 
-    lines = file.read_text(encoding="utf-8").splitlines()
+    text = file.read_text(encoding="utf-8", errors="replace")
+    lines = text.splitlines()
     numbered = "\n".join(f"{i:4} | {line}" for i, line in enumerate(lines, 1))
     return {
         "filename": file.name,
-        "language": language,
+        "language": _language_of(file),
         "line_count": len(lines),
         "numbered_code": numbered,
     }

@@ -1,7 +1,7 @@
 """Webapp de la PoC: interfaz drag & drop sobre el mismo flujo MCP + LLM.
 
 Flujo por escaneo:
-1. El usuario arrastra archivos .py/.js y pulsa "Escanear".
+1. El usuario arrastra archivos y pulsa "Escanear".
 2. Los archivos se guardan en un directorio temporal de uploads.
 3. Se levanta el servidor MCP apuntando a ese directorio (AUDITOR_SAMPLES_DIR).
 4. Por cada archivo: tool read_source -> analisis con el LLM (auditor.py).
@@ -30,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SERVER_PATH = Path(__file__).resolve().parent / "server.py"
 INDEX_HTML = BASE_DIR / "web" / "index.html"
 
-ALLOWED_EXTENSIONS = {".py", ".js"}
+ALLOWED_EXTENSIONS = None  # None = se acepta cualquier tipo de archivo
 MAX_FILES = 10
 MAX_FILE_BYTES = 100_000
 SEVERITIES = ["CRITICA", "ALTA", "MEDIA", "BAJA"]
@@ -55,8 +55,8 @@ async def scan(files: list[UploadFile]) -> dict:
         saved = []
         for f in files:
             name = Path(f.filename or "").name
-            if Path(name).suffix not in ALLOWED_EXTENSIONS:
-                raise HTTPException(400, f"Extension no auditable: {name}")
+            if not name:
+                raise HTTPException(400, "Nombre de archivo invalido")
             content = await f.read()
             if len(content) > MAX_FILE_BYTES:
                 raise HTTPException(400, f"Archivo demasiado grande: {name}")

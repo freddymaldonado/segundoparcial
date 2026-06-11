@@ -75,6 +75,31 @@
       }
       .status { color: var(--muted); font-size: .9rem; }
 
+      /* Progreso por archivo */
+      .progress { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+                  padding: 1.1rem 1.3rem; margin-bottom: 1.5rem; }
+      .progress-head { display: flex; justify-content: space-between; align-items: center;
+                       font-size: .9rem; margin-bottom: .6rem; }
+      .progress-head #progress-label { font-weight: 700; color: var(--ink); }
+      .progress-head #progress-count { color: var(--muted); font-variant-numeric: tabular-nums; }
+      .progress-track { height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+      .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand), #38bdf8);
+                      border-radius: 999px; transition: width .35s ease; }
+      #progress-list { list-style: none; padding: 0; margin: .9rem 0 0; display: grid; gap: .4rem; }
+      #progress-list li { display: flex; align-items: center; gap: .6rem; font-size: .88rem;
+                          padding: .45rem .7rem; border-radius: 9px; background: var(--bg); }
+      #progress-list .pname { font-family: ui-monospace, monospace; flex: 1; word-break: break-all; }
+      #progress-list .pstate { font-size: .78rem; font-weight: 700; }
+      #progress-list li.pending  { opacity: .6; }
+      #progress-list li.running  { box-shadow: inset 3px 0 0 var(--brand); }
+      #progress-list li.done     { box-shadow: inset 3px 0 0 var(--baja); }
+      #progress-list li.failed   { box-shadow: inset 3px 0 0 var(--crit); }
+      #progress-list .ico { width: 16px; height: 16px; flex-shrink: 0; }
+      #progress-list .done .pstate    { color: var(--baja); }
+      #progress-list .failed .pstate  { color: var(--crit); }
+      #progress-list .running .pstate { color: var(--brand); }
+      #progress-list .pending .pstate { color: var(--muted); }
+
       .metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: .75rem; margin: 1.5rem 0; }
       .metric { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .9rem; text-align: center; }
       .metric .n { font-size: 1.7rem; font-weight: 800; }
@@ -158,7 +183,7 @@
       .annot .cwe { color: #94a3b8; font-size: .72rem; font-family: ui-monospace, monospace; }
       .annot .a-field { color: #cbd5e1; font-size: .83rem; margin: .35rem 0; }
       .annot .a-field b { color: #93c5fd; }
-      .annot .fix { background: #06210f; border: 1px solid #14532d; border-radius: 8px; padding: .5rem .7rem; margin-top: .4rem; }
+      .annot .fix { background: #06210f; border: 1px solid #14532d; border-radius: 8px; padding: .5rem .7rem; margin-top: .4rem; color: #e2e8f0; font-size: .83rem; white-space: pre-wrap; word-break: break-word; }
       .annot .fix b { color: #4ade80; }
       .annot code { background: #1f2937; color: #e6edf3; padding: .1rem .4rem; border-radius: 4px; font-size: .8rem; }
 
@@ -198,6 +223,15 @@
         <span id="status" class="status"></span>
       </div>
 
+      <section id="progress" class="progress hidden">
+        <div class="progress-head">
+          <span id="progress-label">Analizando...</span>
+          <span id="progress-count">0 / 0</span>
+        </div>
+        <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+        <ul id="progress-list"></ul>
+      </section>
+
       <section id="metrics" class="metrics hidden"></section>
       <div id="cards-title" class="section-title hidden">Reportes por archivo &middot; clic para ver el detalle</div>
       <section id="cards" class="cards"></section>
@@ -220,6 +254,11 @@
       const cardsTitle = document.getElementById("cards-title");
       const overlay = document.getElementById("overlay");
       const modal = document.getElementById("modal");
+      const progressEl = document.getElementById("progress");
+      const progressBar = document.getElementById("progress-bar");
+      const progressCount = document.getElementById("progress-count");
+      const progressLabel = document.getElementById("progress-label");
+      const progressList = document.getElementById("progress-list");
 
       const SEVERITIES = ["CRITICA", "ALTA", "MEDIA", "BAJA"];
       const HLJS_LANG = {
@@ -281,31 +320,98 @@
         metricsEl.innerHTML = "";
         cardsEl.innerHTML = "";
         cardsTitle.classList.add("hidden");
+        progressEl.classList.add("hidden");
+        progressList.innerHTML = "";
         statusEl.textContent = "";
       });
 
+      const EMPTY_SUMMARY = () => ({
+        archivos: 0, total: 0,
+        por_severidad: { CRITICA: 0, ALTA: 0, MEDIA: 0, BAJA: 0 },
+        dependencias_sospechosas: 0,
+      });
+
+      function mergeSummary(acc, s) {
+        acc.archivos += s.archivos || 0;
+        acc.total += s.total || 0;
+        acc.dependencias_sospechosas += s.dependencias_sospechosas || 0;
+        SEVERITIES.forEach((k) => { acc.por_severidad[k] += (s.por_severidad?.[k]) || 0; });
+        return acc;
+      }
+
+      function initProgress() {
+        progressList.innerHTML = files
+          .map(
+            (f, i) =>
+              `<li class="pending" data-i="${i}">
+                 <span class="ico"></span>
+                 <span class="pname">${esc(f.name)}</span>
+                 <span class="pstate">En cola</span>
+               </li>`
+          )
+          .join("");
+        progressBar.style.width = "0%";
+        progressCount.textContent = `0 / ${files.length}`;
+        progressLabel.textContent = "Analizando archivos...";
+        progressEl.classList.remove("hidden");
+      }
+
+      function setFileState(i, state, label) {
+        const li = progressList.querySelector(`li[data-i="${i}"]`);
+        if (!li) return;
+        li.className = state;
+        const ico = li.querySelector(".ico");
+        ico.innerHTML = state === "running" ? `<span class="spinner"></span>` : "";
+        li.querySelector(".pstate").textContent = label;
+      }
+
       scanbtn.addEventListener("click", async () => {
         scanbtn.disabled = true;
+        clearbtn.disabled = true;
         statusEl.innerHTML = `<span class="spinner"></span>Analizando...`;
         metricsEl.classList.add("hidden");
         cardsEl.innerHTML = "";
         cardsTitle.classList.add("hidden");
+        lastResults = [];
+        initProgress();
 
-        const fd = new FormData();
-        files.forEach((f) => fd.append("files", f));
-        try {
-          const res = await fetch("/api/scan", { method: "POST", body: fd });
-          if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
-          const data = await res.json();
-          lastResults = data.results;
-          renderMetrics(data.summary);
-          renderCards(data.results);
-          statusEl.textContent = "Listo.";
-        } catch (err) {
-          statusEl.textContent = "Error: " + err.message;
-        } finally {
-          scanbtn.disabled = files.length === 0;
+        const summary = EMPTY_SUMMARY();
+        const total = files.length;
+        let done = 0;
+        let errores = 0;
+
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          setFileState(i, "running", "Analizando...");
+          progressLabel.textContent = `Analizando ${f.name}`;
+          try {
+            const fd = new FormData();
+            fd.append("files", f);
+            const res = await fetch("/api/scan", { method: "POST", body: fd });
+            if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+            const data = await res.json();
+            mergeSummary(summary, data.summary);
+            lastResults.push(...data.results);
+            const n = data.results[0]?.audit?.hallazgos?.length ?? 0;
+            setFileState(i, "done", n ? `${n} hallazgos` : "Sin hallazgos");
+          } catch (err) {
+            errores++;
+            setFileState(i, "failed", "Error");
+          } finally {
+            done++;
+            progressCount.textContent = `${done} / ${total}`;
+            progressBar.style.width = `${(done / total) * 100}%`;
+            renderMetrics(summary);
+            renderCards(lastResults);
+          }
         }
+
+        progressLabel.textContent = errores
+          ? `Completado con ${errores} error(es)`
+          : "Analisis completado";
+        statusEl.textContent = errores ? `Listo (${errores} con error).` : "Listo.";
+        scanbtn.disabled = files.length === 0;
+        clearbtn.disabled = false;
       });
 
       function renderMetrics(s) {
@@ -399,7 +505,7 @@
           </div>
           ${h.evidencia ? `<div class="a-field"><b>Evidencia:</b> <code>${esc(h.evidencia)}</code></div>` : ""}
           <div class="a-field"><b>Riesgo:</b> ${esc(h.explicacion)}</div>
-          <div class="fix"><b>Reescritura segura:</b> ${esc(h.reescritura_segura)}</div>
+          <div class="fix"><b>Sugerencias:</b> ${esc(h.reescritura_segura)}</div>
         </div>`;
       }
 

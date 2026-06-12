@@ -120,6 +120,20 @@
       .legend .l-cli::before    { color: var(--alta); }
       .legend .l-llm::before    { color: var(--media); }
       .legend .l-web::before    { color: var(--baja); }
+
+      /* Slides con captura real */
+      .shot-slide { padding: 3vh 3vw; gap: 1rem; }
+      .shot { max-width: 92vw; max-height: 76vh; border-radius: 14px; border: 1px solid var(--line);
+              box-shadow: 0 24px 60px -22px rgba(0,0,0,.65); object-fit: contain; }
+
+      /* Etiqueta doble uso */
+      .col.red { border-color: var(--crit); }
+      .col.blue { border-color: var(--accent); }
+      .col.red h3 { color: var(--crit); }
+      .col.blue h3 { color: var(--baja); }
+
+      .authors { margin-top: 1.2rem; color: var(--accent); font-weight: 700;
+                 font-size: clamp(1rem, 2.2vw, 1.3rem); letter-spacing: .02em; }
     </style>
   </head>
   <body>
@@ -131,6 +145,7 @@
       <h1>Guardrails para<br /><span class="accent">Vibe Coding</span></h1>
       <p class="sub">Un auditor que lee código generado por IA y devuelve hallazgos
       críticos antes de que ese código llegue a producción.</p>
+      <p class="authors">Freddy Maldonado &middot; Joaquin Peredo</p>
     </section>
 
     <!-- 2. El problema -->
@@ -144,34 +159,43 @@
     <!-- 3. Claude Mythos -->
     <section class="slide">
       <div class="kicker">Primeros 5 minutos &middot; Caso Claude Mythos</div>
-      <h2>El mismo poder que <span class="accent">parcha</span>,<br /> también <span class="accent">ataca</span></h2>
-      <p class="sub">Mythos es tan capaz que Anthropic no lo libera al público: solo a
-      grandes empresas, con acceso controlado, para parchar su software.</p>
+      <h2>El mismo poder que <span class="accent">parcha</span><br />también <span class="accent">ataca</span></h2>
+      <p class="sub">Mythos razona tan profundo que encuentra vulnerabilidades
+      <b>latentes durante años</b>, invisibles para los revisores humanos.</p>
     </section>
 
-    <!-- 4. Comparativa Mythos -->
+    <!-- 4. Doble uso: la navaja de doble filo -->
     <section class="slide">
-      <div class="kicker">Paralelo: superficie de ataque / defensa</div>
+      <div class="kicker">Doble uso &middot; la navaja de doble filo</div>
       <div class="cols">
-        <div class="col">
-          <h3>Claude Mythos</h3>
+        <div class="col blue">
+          <h3>En defensa (Blue Team)</h3>
           <ul>
-            <li>Modelo frontera, doble uso</li>
-            <li>Guardrail por <b>escasez</b>: acceso restringido</li>
-            <li>Protege limitando quién lo usa</li>
-            <li>Riesgo: el motor en sí</li>
+            <li>Parcha software crítico antes que nadie</li>
+            <li>Halla bugs que llevaban años sin detectarse</li>
+            <li>Acelera la respuesta de seguridad</li>
           </ul>
         </div>
-        <div class="col">
-          <h3>Nuestra PoC</h3>
+        <div class="col red">
+          <h3>En ataque (Red Team)</h3>
           <ul>
-            <li>Arquitectura de control alrededor del LLM</li>
-            <li>Guardrail por <b>diseño</b>: tools acotados</li>
-            <li>Protege limitando qué puede hacer</li>
-            <li>Riesgo: el código que produce</li>
+            <li>Esa misma capacidad encuentra 0-days profundos</li>
+            <li>Un atacante hallaría las vulns más difíciles</li>
+            <li>El motor mismo es el riesgo</li>
           </ul>
         </div>
       </div>
+      <p class="sub">Por eso Anthropic <b>no lo libera al público</b>: solo acceso controlado
+      a grandes empresas. El talento ofensivo y el defensivo son el mismo.</p>
+    </section>
+
+    <!-- 4b. El paralelo con nuestra PoC -->
+    <section class="slide">
+      <div class="kicker">El paralelo &middot; justo lo que nos tocó</div>
+      <h2>Nuestro tema es <span class="accent">encontrar vulnerabilidades</span><br />en los archivos</h2>
+      <p class="sub">Exactamente lo que Mythos hace de forma espectacular: razonar sobre
+      código con <span class="accent">ventanas de contexto enormes</span> y detectar fallos
+      profundos. Nosotros aplicamos esa misma idea, a nuestra escala y de buena fe.</p>
     </section>
 
     <!-- 5. Diagrama de flujo -->
@@ -214,7 +238,7 @@ sequenceDiagram
         S-->>C: código numerado (no ejecuta)
         C->>L: audit_file() · prompt auditor + código
         Note over C,L: auditor.py · ÚNICO punto que usa el LLM
-        L-->>C: hallazgos JSON (severidad, CWE, fix)
+        L-->>C: hallazgos JSON (severidad, riesgo, fix)
     end
     C->>W: resultados agregados
     W-->>U: resumen por severidad + hallazgos
@@ -339,25 +363,32 @@ password = hashlib.<span class="bad">md5</span>(pwd).hexdigest()<br />
       <span class="accent">alucinada</span>.</p>
     </section>
 
-    <!-- 8. Métricas -->
+    <!-- 7. Ejemplo de dato -->
     <section class="slide">
-      <div class="kicker">Resultado del escaneo &middot; 3 archivos</div>
-      <div class="metrics">
-        <div class="metric"><div class="n">17</div><div class="l">Hallazgos</div></div>
-        <div class="metric crit"><div class="n">7</div><div class="l">Criticos</div></div>
-        <div class="metric alta"><div class="n">5</div><div class="l">Altos</div></div>
-        <div class="metric deps"><div class="n">2</div><div class="l">Deps falsas</div></div>
+      <div class="kicker">Ejemplo de entrada</div>
+      <div class="code">
+<span class="c"># código "vibe-coded" sin pistas</span><br />
+import <span class="bad">pysecureparse</span>  <span class="c"># librería inexistente</span><br /><br />
+query = <span class="bad">f"SELECT * FROM users WHERE name='{user}'"</span><br />
+password = hashlib.<span class="bad">md5</span>(pwd).hexdigest()<br />
+<span class="bad">eval</span>(rule_expression)
       </div>
-      <p class="sub">Detectó la dependencia inventada <span class="accent">ai-secure-validator-pro</span>
-      y propuso la reescritura segura de cada fallo.</p>
+      <p class="sub">SQL injection, hash débil, ejecución dinámica y una dependencia
+      <span class="accent">alucinada</span>.</p>
     </section>
 
-    <!-- 9. Validación humana -->
-    <section class="slide">
-      <div class="kicker">El guardrail final</div>
-      <h2>La IA recomienda.<br /><span class="accent">El humano valida.</span></h2>
-      <p class="sub">Revisamos cada hallazgo: qué acertó, qué omitió y dónde pudo alucinar.
-      La decisión final nunca es automática.</p>
+    <!-- 8. Resultado real del escaneo (captura) -->
+    <section class="slide shot-slide">
+      <div class="kicker">Resultado real &middot; 3 archivos, 15 hallazgos</div>
+      <img class="shot" src="screen_proceso_scaneado.png"
+           alt="Proceso de escaneo: progreso por archivo, métricas por severidad y tarjetas de reporte" />
+    </section>
+
+    <!-- 8b. Análisis por línea (captura) -->
+    <section class="slide shot-slide">
+      <div class="kicker">Análisis por línea &middot; evidencia + riesgo + sugerencia</div>
+      <img class="shot" src="screen_analisis_halalzgos.png"
+           alt="Visor de código con la línea vulnerable resaltada y el análisis del LLM inline" />
     </section>
 
     <!-- 10. Demo -->

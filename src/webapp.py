@@ -18,12 +18,12 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from openai import OpenAI
 
-from auditor import audit_file
+from auditor import audit_file, render_report
 from client_demo import tool_result
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -67,6 +67,20 @@ async def scan(files: list[UploadFile]) -> dict:
         return {"summary": _summarize(results), "results": results}
     finally:
         shutil.rmtree(upload_dir, ignore_errors=True)
+
+
+@app.post("/api/report")
+def report(payload: dict) -> Response:
+    """Genera el reporte Markdown descargable a partir de los resultados del escaneo."""
+    results = payload.get("results")
+    if not isinstance(results, list) or not results:
+        raise HTTPException(400, "No hay resultados para generar el reporte")
+    markdown = render_report(results)
+    return Response(
+        content=markdown,
+        media_type="text/markdown; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="reporte-guardrails.md"'},
+    )
 
 
 async def _audit_via_mcp(samples_dir: Path, filenames: list[str]) -> list[dict]:

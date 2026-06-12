@@ -114,6 +114,14 @@
       /* Tarjetas por archivo */
       .section-title { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em;
                        color: var(--muted); margin: 1.8rem 0 .8rem; font-weight: 700; }
+      .cards-head { display: flex; align-items: center; justify-content: space-between;
+                    gap: 1rem; flex-wrap: wrap; }
+      .cards-head .section-title { margin: 1.8rem 0 .8rem; }
+      .download { background: #0f172a; color: #fff; border: none; border-radius: 10px;
+                  padding: .6rem 1.1rem; font-size: .85rem; font-weight: 700; cursor: pointer;
+                  transition: filter .15s; }
+      .download:hover:not(:disabled) { filter: brightness(1.25); }
+      .download:disabled { opacity: .5; cursor: not-allowed; }
       .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
       .filecard {
         background: var(--card); border: 1px solid var(--line); border-radius: 14px;
@@ -233,7 +241,10 @@
       </section>
 
       <section id="metrics" class="metrics hidden"></section>
-      <div id="cards-title" class="section-title hidden">Reportes por archivo &middot; clic para ver el detalle</div>
+      <div id="cards-head" class="cards-head hidden">
+        <span class="section-title">Reportes por archivo &middot; clic para ver el detalle</span>
+        <button id="downloadbtn" class="download">&#11015; Descargar reporte .md</button>
+      </div>
       <section id="cards" class="cards"></section>
     </div>
 
@@ -251,7 +262,8 @@
       const statusEl = document.getElementById("status");
       const metricsEl = document.getElementById("metrics");
       const cardsEl = document.getElementById("cards");
-      const cardsTitle = document.getElementById("cards-title");
+      const cardsHead = document.getElementById("cards-head");
+      const downloadbtn = document.getElementById("downloadbtn");
       const overlay = document.getElementById("overlay");
       const modal = document.getElementById("modal");
       const progressEl = document.getElementById("progress");
@@ -319,7 +331,7 @@
         metricsEl.classList.add("hidden");
         metricsEl.innerHTML = "";
         cardsEl.innerHTML = "";
-        cardsTitle.classList.add("hidden");
+        cardsHead.classList.add("hidden");
         progressEl.classList.add("hidden");
         progressList.innerHTML = "";
         statusEl.textContent = "";
@@ -371,7 +383,7 @@
         statusEl.innerHTML = `<span class="spinner"></span>Analizando...`;
         metricsEl.classList.add("hidden");
         cardsEl.innerHTML = "";
-        cardsTitle.classList.add("hidden");
+        cardsHead.classList.add("hidden");
         lastResults = [];
         initProgress();
 
@@ -454,7 +466,8 @@
             </article>`;
           })
           .join("");
-        cardsTitle.classList.remove("hidden");
+        cardsHead.classList.toggle("hidden", results.length === 0);
+        downloadbtn.disabled = results.length === 0;
       }
 
       cardsEl.addEventListener("click", (e) => {
@@ -576,6 +589,35 @@
       function closeModal() { overlay.classList.remove("open"); }
       overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+      downloadbtn.addEventListener("click", async () => {
+        if (!lastResults.length) return;
+        const original = downloadbtn.innerHTML;
+        downloadbtn.disabled = true;
+        downloadbtn.innerHTML = "Generando...";
+        try {
+          const res = await fetch("/api/report", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ results: lastResults }),
+          });
+          if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "reporte-guardrails.md";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          statusEl.textContent = "Error al generar el reporte: " + err.message;
+        } finally {
+          downloadbtn.innerHTML = original;
+          downloadbtn.disabled = false;
+        }
+      });
     </script>
   </body>
 </html>

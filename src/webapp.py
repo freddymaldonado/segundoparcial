@@ -8,6 +8,7 @@ Flujo por escaneo:
 5. Devuelve JSON con resumen por severidad + hallazgos para el frontend.
 """
 
+import json
 import os
 import shutil
 import sys
@@ -18,11 +19,12 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from openai import OpenAI
 
+from agentic import run_agentic_stream
 from auditor import audit_file, render_report
 from client_demo import tool_result
 
@@ -81,6 +83,45 @@ def report(payload: dict) -> Response:
         media_type="text/markdown; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="reporte-guardrails.md"'},
     )
+
+
+async def _save_uploads(files: list[UploadFile], prefix: str) -> tuple[Path, list[str]]:
+    """Guarda los archivos subidos en un directorio temporal y valida limites."""
+    if not files:
+        raise HTTPException(400, "No se recibieron archivos")
+    if len(files) > MAX_FILES:
+        raise HTTPException(400, f"Maximo {MAX_FILES} archivos por escaneo")
+    upload_dir = Path(tempfile.mkdtemp(prefix=prefix))
+    saved: list[str] = []
+    for f in files:
+        name = Path(f.filename or "").name
+        if not name:
+            shutil.rmtree(upload_dir, ignore_errors=True)
+            raise HTTPException(400, "Nombre de archivo invalido")
+        content = await f.read()
+        if len(content) > MAX_FILE_BYTES:
+            shutil.rmtree(upload_dir, ignore_errors=True)
+            raise HTTPException(400, f"Archivo demasiado grande: {name}")
+        (upload_dir / name).write_bytes(content)
+        saved.append(name)
+    return upload_dir, saved
+
+
+@app.post("/api/scan-agentic")
+async def scan_agentic(files: list[UploadFile]) -> StreamingResponse:
+    """Ejecuta el flujo multi-agente y transmite los eventos en vivo (NDJSON)."""
+    upload_dir, saved = await _save_uploads(files, "guardrails_agentic_")
+
+    async def event_stream():
+        try:
+            async for event in run_agentic_stream(upload_dir, saved):
+                yield json.dumps(event, ensure_ascii=False) + "\n"
+        except Exception as exc:  # noqa: BLE001 - se reporta al cliente
+            yield json.dumps({"type": "error", "detail": str(exc)}) + "\n"
+        finally:
+            shutil.rmtree(upload_dir, ignore_errors=True)
+
+    return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
 
 async def _audit_via_mcp(samples_dir: Path, filenames: list[str]) -> list[dict]:

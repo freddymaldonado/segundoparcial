@@ -32,45 +32,12 @@ from agents import (
     agente_reporte,
     agente_seguridad,
     agente_validador,
+    resumen_para_reporte,
 )
 from auditor import render_agentic_html, render_agentic_report
 from client_demo import tool_result
 
 SERVER_PATH = Path(__file__).resolve().parent / "server.py"
-
-
-def _resumen_para_reporte(files: list[dict]) -> list[dict]:
-    """Compacta cada archivo para el Agente de Reporte (solo lo confirmado)."""
-    resumen = []
-    for f in files:
-        validaciones = f["val_data"].get("validaciones", [])
-        confirmados = [v for v in validaciones if v.get("veredicto") == "CONFIRMADO"]
-        riesgosas = [
-            d
-            for d in f["dep_data"].get("dependencias", [])
-            if d.get("estado") in ("sospechoso", "desconocido")
-        ]
-        resumen.append(
-            {
-                "archivo": f["filename"],
-                "lenguaje": f["language"],
-                "hallazgos_seguridad": [
-                    {
-                        "titulo": h.get("titulo"),
-                        "severidad": h.get("severidad"),
-                        "linea": h.get("linea"),
-                        "cwe": h.get("cwe"),
-                    }
-                    for h in f["audit"].get("hallazgos", [])
-                ],
-                "validaciones_confirmadas": [
-                    {"referencia": v.get("referencia"), "confianza": v.get("confianza")}
-                    for v in confirmados
-                ],
-                "dependencias_riesgosas": riesgosas,
-            }
-        )
-    return resumen
 
 
 async def run() -> None:
@@ -140,7 +107,7 @@ async def run() -> None:
                 )
 
             # 5. Reporte (LLM)
-            rep_msg, report = agente_reporte(llm, _resumen_para_reporte(files))
+            rep_msg, report = agente_reporte(llm, resumen_para_reporte(files))
             convo.send(rep_msg)
             print(f"[Reporte] {rep_msg.resultado}\n")
 

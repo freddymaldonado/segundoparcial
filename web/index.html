@@ -207,6 +207,69 @@
       .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e1; border-top-color: var(--brand);
                  border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; margin-right: .4rem; }
       @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* ---- Selector de modo ---- */
+      .modeswitch { display: inline-flex; background: var(--card); border: 1px solid var(--line);
+                    border-radius: 12px; padding: .25rem; gap: .25rem; margin-bottom: 1rem; }
+      .modeswitch button { border: none; background: transparent; color: var(--muted); cursor: pointer;
+                           padding: .55rem 1rem; border-radius: 9px; font-size: .88rem; font-weight: 700;
+                           display: flex; align-items: center; gap: .4rem; transition: background .15s, color .15s; }
+      .modeswitch button.active { background: var(--brand); color: #fff; }
+      .modeswitch button.active.agentic { background: var(--deps); }
+      .mode-hint { font-size: .82rem; color: var(--muted); margin: 0 0 1rem; }
+
+      /* ---- Vista agentic ---- */
+      .agentic-pipeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: .7rem; margin-bottom: 1.5rem; }
+      @media (max-width: 880px) { .agentic-pipeline { grid-template-columns: repeat(2, 1fr); } }
+      .agent-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+                    padding: 1rem .9rem; position: relative; transition: border-color .2s, box-shadow .2s, transform .2s; }
+      .agent-card .a-ico { font-size: 1.5rem; }
+      .agent-card .a-name { font-weight: 800; font-size: .82rem; margin: .4rem 0 .15rem; }
+      .agent-card .a-role { font-size: .72rem; color: var(--muted); line-height: 1.35;
+                            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+      .agent-card .a-state { margin-top: .55rem; font-size: .72rem; font-weight: 800; text-transform: uppercase;
+                             letter-spacing: .04em; color: var(--muted); display: flex; align-items: center; gap: .35rem; }
+      .agent-card .a-file { font-size: .68rem; color: var(--muted); font-family: ui-monospace, monospace;
+                            margin-top: .25rem; min-height: 1em; word-break: break-all; }
+      .agent-card.idle    { opacity: .65; }
+      .agent-card.running { border-color: var(--deps); box-shadow: 0 0 0 3px rgba(124,58,237,.18); transform: translateY(-3px); }
+      .agent-card.running .a-state { color: var(--deps); }
+      .agent-card.done    { border-color: var(--baja); }
+      .agent-card.done .a-state { color: var(--baja); }
+      .agent-card .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--deps); animation: pulse 1s infinite; }
+      @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+      .convo { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem 1.2rem; margin-bottom: 1.5rem; }
+      .convo h3 { margin: 0 0 .8rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+      .convo-feed { display: grid; gap: .55rem; max-height: 360px; overflow-y: auto; }
+      .msg { border: 1px solid var(--line); border-left: 4px solid var(--deps); border-radius: 0 10px 10px 0;
+             padding: .6rem .85rem; background: var(--bg); animation: slidein .3s ease; }
+      @keyframes slidein { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; } }
+      .msg .m-route { font-size: .82rem; font-weight: 800; }
+      .msg .m-route .arrow { color: var(--deps); margin: 0 .35rem; }
+      .msg .m-task { font-size: .8rem; color: #334155; margin: .2rem 0; }
+      .msg .m-foot { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap;
+                     font-size: .76rem; color: var(--muted); margin-top: .25rem; }
+      .msg .m-result { color: var(--ink); font-weight: 600; }
+      .msg .conf { font-variant-numeric: tabular-nums; font-weight: 800; }
+      .msg .conf.hi { color: var(--baja); } .msg .conf.mid { color: var(--media); } .msg .conf.lo { color: var(--crit); }
+
+      .report-final { display: grid; gap: 1rem; }
+      .report-final .rf-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem 1.3rem; }
+      .report-final h3 { margin: 0 0 .7rem; font-size: 1rem; }
+      .report-final table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+      .report-final th, .report-final td { border: 1px solid var(--line); padding: .45rem .55rem; text-align: left; vertical-align: top; }
+      .report-final th { background: var(--bg); color: #334155; }
+      .report-final ul { margin: 0; padding-left: 1.2rem; }
+      .report-final li { font-size: .86rem; margin: .25rem 0; }
+      .rf-card.prio { border-left: 4px solid var(--crit); }
+      .rf-card.rec { border-left: 4px solid var(--brand); }
+      .rf-card.human { border-left: 4px solid var(--media); }
+      .rf-card.limit { border-left: 4px solid var(--muted); }
+      .veredicto { font-weight: 800; font-size: .74rem; padding: .12rem .45rem; border-radius: 999px; }
+      .veredicto.CONFIRMADO { background: #dcfce7; color: #166534; }
+      .veredicto.FALSO_POSITIVO { background: #e2e8f0; color: #475569; }
+      .veredicto.REVISION_HUMANA { background: #fef9c3; color: #854d0e; }
     </style>
   </head>
   <body>
@@ -215,6 +278,14 @@
         <h1>Guardrails para Vibe Coding</h1>
         <p>Grupo 3 &middot; Auditor de codigo generado por IA &middot; Servidor MCP + LLM</p>
       </header>
+
+      <div class="modeswitch" id="modeswitch">
+        <button id="mode-clasico" class="active" data-mode="clasico">&#9889; Modo clasico</button>
+        <button id="mode-agentic" class="agentic" data-mode="agentic">&#129302; Modo agentic (5 agentes)</button>
+      </div>
+      <p id="mode-hint" class="mode-hint">
+        Modo clasico: un solo paso por archivo (auditor LLM directo).
+      </p>
 
       <div id="dropzone">
         <div class="icon">&#128228;</div>
@@ -238,6 +309,25 @@
         </div>
         <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
         <ul id="progress-list"></ul>
+      </section>
+
+      <!-- Vista del modo agentic -->
+      <section id="agentic" class="hidden">
+        <div class="section-title">Agentes trabajando &middot; Seguridad y Dependencias corren en paralelo</div>
+        <div id="agent-pipeline" class="agentic-pipeline"></div>
+
+        <div class="convo">
+          <h3>Conversacion entre agentes (en vivo)</h3>
+          <div id="convo-feed" class="convo-feed"></div>
+        </div>
+
+        <section id="agentic-metrics" class="metrics hidden"></section>
+
+        <div id="cards-head-agentic" class="cards-head hidden">
+          <span class="section-title">Reporte final del sistema agentic</span>
+          <button id="downloadbtn-agentic" class="download">&#11015; Descargar reporte agentic .md</button>
+        </div>
+        <div id="report-final" class="report-final"></div>
       </section>
 
       <section id="metrics" class="metrics hidden"></section>
@@ -271,6 +361,29 @@
       const progressCount = document.getElementById("progress-count");
       const progressLabel = document.getElementById("progress-label");
       const progressList = document.getElementById("progress-list");
+
+      // Modo agentic
+      const modeswitch = document.getElementById("modeswitch");
+      const modeClasicoBtn = document.getElementById("mode-clasico");
+      const modeAgenticBtn = document.getElementById("mode-agentic");
+      const modeHint = document.getElementById("mode-hint");
+      const agenticEl = document.getElementById("agentic");
+      const agentPipeline = document.getElementById("agent-pipeline");
+      const convoFeed = document.getElementById("convo-feed");
+      const agenticMetrics = document.getElementById("agentic-metrics");
+      const reportFinal = document.getElementById("report-final");
+      const cardsHeadAgentic = document.getElementById("cards-head-agentic");
+      const downloadbtnAgentic = document.getElementById("downloadbtn-agentic");
+
+      let mode = "clasico";
+      let agenticReportMd = "";
+      const AGENT_ICONS = {
+        "Agente de Recoleccion": "📥",
+        "Agente de Seguridad": "🛡️",
+        "Agente de Dependencias": "📦",
+        "Agente Validador": "✅",
+        "Agente de Reporte": "📝",
+      };
 
       const SEVERITIES = ["CRITICA", "ALTA", "MEDIA", "BAJA"];
       const HLJS_LANG = {
@@ -328,13 +441,7 @@
         files = [];
         lastResults = [];
         refreshList();
-        metricsEl.classList.add("hidden");
-        metricsEl.innerHTML = "";
-        cardsEl.innerHTML = "";
-        cardsHead.classList.add("hidden");
-        progressEl.classList.add("hidden");
-        progressList.innerHTML = "";
-        statusEl.textContent = "";
+        resetOutputs();
       });
 
       const EMPTY_SUMMARY = () => ({
@@ -377,7 +484,44 @@
         li.querySelector(".pstate").textContent = label;
       }
 
-      scanbtn.addEventListener("click", async () => {
+      // ---- Selector de modo ----
+      modeswitch.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-mode]");
+        if (!btn) return;
+        mode = btn.dataset.mode;
+        modeClasicoBtn.classList.toggle("active", mode === "clasico");
+        modeAgenticBtn.classList.toggle("active", mode === "agentic");
+        modeHint.textContent =
+          mode === "agentic"
+            ? "Modo agentic: 5 agentes (Recoleccion, Seguridad, Dependencias, Validador, Reporte) conversan via MCP. Seguridad y Dependencias corren en paralelo."
+            : "Modo clasico: un solo paso por archivo (auditor LLM directo).";
+        scanbtn.textContent = mode === "agentic" ? "Ejecutar agentes" : "Escanear";
+        resetOutputs();
+      });
+
+      function resetOutputs() {
+        metricsEl.classList.add("hidden");
+        metricsEl.innerHTML = "";
+        cardsEl.innerHTML = "";
+        cardsHead.classList.add("hidden");
+        progressEl.classList.add("hidden");
+        progressList.innerHTML = "";
+        agenticEl.classList.add("hidden");
+        agentPipeline.innerHTML = "";
+        convoFeed.innerHTML = "";
+        agenticMetrics.classList.add("hidden");
+        agenticMetrics.innerHTML = "";
+        reportFinal.innerHTML = "";
+        cardsHeadAgentic.classList.add("hidden");
+        statusEl.textContent = "";
+      }
+
+      scanbtn.addEventListener("click", () => {
+        if (mode === "agentic") runAgentic();
+        else runClasico();
+      });
+
+      async function runClasico() {
         scanbtn.disabled = true;
         clearbtn.disabled = true;
         statusEl.innerHTML = `<span class="spinner"></span>Analizando...`;
@@ -424,7 +568,7 @@
         statusEl.textContent = errores ? `Listo (${errores} con error).` : "Listo.";
         scanbtn.disabled = files.length === 0;
         clearbtn.disabled = false;
-      });
+      }
 
       function renderMetrics(s) {
         const sev = s.por_severidad;
@@ -617,6 +761,229 @@
           downloadbtn.innerHTML = original;
           downloadbtn.disabled = false;
         }
+      });
+
+      // ============ MODO AGENTIC ============
+      const AGENT_ORDER = [
+        "Agente de Recoleccion",
+        "Agente de Seguridad",
+        "Agente de Dependencias",
+        "Agente Validador",
+        "Agente de Reporte",
+      ];
+
+      function renderPipeline(agents) {
+        const roster = agents && agents.length ? agents : AGENT_ORDER.map((n) => ({ nombre: n, rol: "" }));
+        agentPipeline.innerHTML = roster
+          .map(
+            (a) => `
+            <div class="agent-card idle" data-agent="${esc(a.nombre)}">
+              <div class="a-ico">${AGENT_ICONS[a.nombre] || "🤖"}</div>
+              <div class="a-name">${esc(a.nombre.replace("Agente de ", "").replace("Agente ", ""))}</div>
+              <div class="a-role">${esc(a.rol || "")}</div>
+              <div class="a-state"><span class="dot"></span><span class="lbl">En espera</span></div>
+              <div class="a-file"></div>
+            </div>`
+          )
+          .join("");
+      }
+
+      function setAgentState(name, state, file) {
+        const card = agentPipeline.querySelector(`.agent-card[data-agent="${CSS.escape(name)}"]`);
+        if (!card) return;
+        card.classList.remove("idle", "running", "done");
+        card.classList.add(state);
+        const lbl = card.querySelector(".a-state .lbl");
+        const dot = card.querySelector(".a-state .dot");
+        const fileEl = card.querySelector(".a-file");
+        if (state === "running") {
+          lbl.textContent = "Trabajando";
+          dot.className = "dot pulse";
+        } else if (state === "done") {
+          lbl.textContent = "Listo";
+          dot.className = "dot";
+        } else {
+          lbl.textContent = "En espera";
+          dot.className = "dot";
+        }
+        if (file !== undefined) fileEl.textContent = file || "";
+      }
+
+      function confClass(c) {
+        if (c >= 0.85) return "hi";
+        if (c >= 0.6) return "mid";
+        return "lo";
+      }
+
+      function appendMessage(m) {
+        const conf = typeof m.confianza === "number" ? Math.round(m.confianza * 100) : null;
+        const div = document.createElement("div");
+        div.className = "msg";
+        div.innerHTML = `
+          <div class="m-route">${esc(m.de || "?")}<span class="arrow">&rarr;</span>${esc(m.para || "?")}</div>
+          <div class="m-task">${esc(m.tarea || "")}</div>
+          <div class="m-foot">
+            <span class="m-result">${esc(m.resultado || "")}</span>
+            ${conf != null ? `<span class="conf ${confClass(m.confianza)}">${conf}% confianza</span>` : ""}
+          </div>`;
+        convoFeed.appendChild(div);
+        convoFeed.scrollTop = convoFeed.scrollHeight;
+      }
+
+      function renderAgenticMetrics(mt) {
+        const sev = mt.por_severidad || {};
+        agenticMetrics.innerHTML = `
+          <div class="metric total"><div class="n">${mt.total || 0}</div><div class="l">Hallazgos</div></div>
+          <div class="metric crit"><div class="n">${sev.CRITICA || 0}</div><div class="l">Critica</div></div>
+          <div class="metric alta"><div class="n">${sev.ALTA || 0}</div><div class="l">Alta</div></div>
+          <div class="metric media"><div class="n">${sev.MEDIA || 0}</div><div class="l">Media</div></div>
+          <div class="metric baja"><div class="n">${sev.BAJA || 0}</div><div class="l">Baja</div></div>
+          <div class="metric deps"><div class="n">${mt.dependencias_sospechosas || 0}</div><div class="l">Deps sosp.</div></div>`;
+        agenticMetrics.classList.remove("hidden");
+      }
+
+      function renderFinalReport(report) {
+        const r = report || {};
+        const prio = Array.isArray(r.riesgos_priorizados) ? r.riesgos_priorizados : [];
+        const recs = Array.isArray(r.recomendaciones) ? r.recomendaciones : [];
+        const lims = Array.isArray(r.limitaciones) ? r.limitaciones : [];
+        const human = Array.isArray(r.validacion_humana) ? r.validacion_humana : [];
+
+        const parts = [];
+        if (r.problema || r.resumen_ejecutivo) {
+          parts.push(`
+            <div class="rf-card">
+              <h3>Resumen ejecutivo</h3>
+              ${r.problema ? `<p><strong>Problema:</strong> ${esc(r.problema)}</p>` : ""}
+              ${r.resumen_ejecutivo ? `<p>${esc(r.resumen_ejecutivo)}</p>` : ""}
+            </div>`);
+        }
+        if (prio.length) {
+          parts.push(`
+            <div class="rf-card prio">
+              <h3>Riesgos priorizados</h3>
+              <table>
+                <tr><th>#</th><th>Riesgo</th><th>Severidad</th><th>Archivo</th></tr>
+                ${prio
+                  .map(
+                    (p, i) => `<tr>
+                      <td>${i + 1}</td>
+                      <td>${esc(p.riesgo || p.descripcion || p.titulo || "")}</td>
+                      <td>${esc(p.severidad || "")}</td>
+                      <td>${esc(p.archivo || "")}</td>
+                    </tr>`
+                  )
+                  .join("")}
+              </table>
+            </div>`);
+        }
+        if (recs.length) {
+          parts.push(`
+            <div class="rf-card rec">
+              <h3>Recomendaciones</h3>
+              <ul>${recs.map((x) => `<li>${esc(typeof x === "string" ? x : x.texto || JSON.stringify(x))}</li>`).join("")}</ul>
+            </div>`);
+        }
+        if (human.length) {
+          parts.push(`
+            <div class="rf-card human">
+              <h3>Requiere validacion humana</h3>
+              <ul>${human.map((x) => `<li>${esc(typeof x === "string" ? x : x.texto || JSON.stringify(x))}</li>`).join("")}</ul>
+            </div>`);
+        }
+        if (lims.length) {
+          parts.push(`
+            <div class="rf-card limit">
+              <h3>Limitaciones</h3>
+              <ul>${lims.map((x) => `<li>${esc(typeof x === "string" ? x : x.texto || JSON.stringify(x))}</li>`).join("")}</ul>
+            </div>`);
+        }
+        reportFinal.innerHTML = parts.join("");
+      }
+
+      async function runAgentic() {
+        if (!files.length) return;
+        resetOutputs();
+        scanbtn.disabled = true;
+        clearbtn.disabled = true;
+        agenticReportMd = "";
+        statusEl.innerHTML = `<span class="spinner"></span>Coordinando agentes...`;
+        agenticEl.classList.remove("hidden");
+        renderPipeline(null);
+
+        const fd = new FormData();
+        files.forEach((f) => fd.append("files", f));
+
+        try {
+          const res = await fetch("/api/scan-agentic", { method: "POST", body: fd });
+          if (!res.ok) {
+            let detail = res.statusText;
+            try { detail = (await res.json()).detail || detail; } catch (_) {}
+            throw new Error(detail);
+          }
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            let nl;
+            while ((nl = buffer.indexOf("\n")) >= 0) {
+              const line = buffer.slice(0, nl).trim();
+              buffer = buffer.slice(nl + 1);
+              if (line) handleAgenticEvent(JSON.parse(line));
+            }
+          }
+          if (buffer.trim()) handleAgenticEvent(JSON.parse(buffer.trim()));
+          statusEl.textContent = "Sistema agentic completado.";
+        } catch (err) {
+          statusEl.textContent = "Error en modo agentic: " + err.message;
+        } finally {
+          scanbtn.disabled = files.length === 0;
+          clearbtn.disabled = false;
+        }
+      }
+
+      function handleAgenticEvent(ev) {
+        switch (ev.type) {
+          case "start":
+            renderPipeline(ev.agents);
+            statusEl.innerHTML = `<span class="spinner"></span>Analizando ${(ev.files || []).length} archivo(s)...`;
+            break;
+          case "agent":
+            setAgentState(ev.agent, ev.state, ev.file);
+            break;
+          case "message":
+            appendMessage(ev.message || {});
+            break;
+          case "file_done":
+            statusEl.innerHTML = `<span class="spinner"></span>Archivo procesado: ${esc(ev.file || "")}`;
+            break;
+          case "report":
+            AGENT_ORDER.forEach((n) => setAgentState(n, "done"));
+            if (ev.metrics) renderAgenticMetrics(ev.metrics);
+            renderFinalReport(ev.report);
+            agenticReportMd = ev.report_md || "";
+            cardsHeadAgentic.classList.toggle("hidden", !agenticReportMd);
+            break;
+          case "error":
+            statusEl.textContent = "Error: " + (ev.detail || "desconocido");
+            break;
+        }
+      }
+
+      downloadbtnAgentic.addEventListener("click", () => {
+        if (!agenticReportMd) return;
+        const blob = new Blob([agenticReportMd], { type: "text/markdown;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "reporte-agentic.md";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
       });
     </script>
   </body>

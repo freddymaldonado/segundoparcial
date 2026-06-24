@@ -264,3 +264,301 @@ def render_html(results: list[dict]) -> str:
     )
     parts.append("</div></body></html>")
     return "".join(parts)
+
+
+# =========================================================================== #
+# Reporte del sistema AGENTIC (Parte II): incluye la conversacion entre        #
+# agentes, hallazgos validados, riesgos priorizados y limitaciones.            #
+# =========================================================================== #
+
+VEREDICTO_ICON = {
+    "CONFIRMADO": "[OK] CONFIRMADO",
+    "FALSO_POSITIVO": "[x] FALSO POSITIVO",
+    "REVISION_HUMANA": "[?] REVISION HUMANA",
+}
+
+
+def _conf(value) -> str:
+    """Formatea una confianza 0..1 como porcentaje."""
+    try:
+        return f"{round(float(value) * 100)}%"
+    except (TypeError, ValueError):
+        return "N/A"
+
+
+def render_agentic_report(context: dict) -> str:
+    """Genera el reporte final en Markdown del sistema multi-agente."""
+    files = context["files"]
+    conversation = context["conversation"]
+    report = context["report"]
+    agents = context["agents"]
+
+    total_hallazgos = sum(len(f["audit"].get("hallazgos", [])) for f in files)
+    total_validaciones = sum(len(f["val_data"].get("validaciones", [])) for f in files)
+    total_confirmados = sum(
+        1
+        for f in files
+        for v in f["val_data"].get("validaciones", [])
+        if v.get("veredicto") == "CONFIRMADO"
+    )
+    total_fp = sum(
+        1
+        for f in files
+        for v in f["val_data"].get("validaciones", [])
+        if v.get("veredicto") == "FALSO_POSITIVO"
+    )
+
+    L: list[str] = [
+        "# Reporte Final - Sistema Agentic de Guardrails (Grupo 3)",
+        "",
+        f"Modelo de los agentes: `{MODEL}` | Servidor MCP: `guardrails-auditor`",
+        "",
+        "## 1. Problema analizado",
+        "",
+        f"> {report.get('problema', 'Auditoria defensiva de codigo generado por IA.')}",
+        "",
+        f"{report.get('resumen_ejecutivo', '')}",
+        "",
+        "## 2. Agentes utilizados",
+        "",
+        "| Agente | Rol | Motor |",
+        "|--------|-----|-------|",
+    ]
+    for a in agents:
+        L.append(f"| {a['nombre']} | {a['rol']} | {a['motor']} |")
+
+    L += [
+        "",
+        "## 3. Evidencia procesada",
+        "",
+        "| Archivo | Lenguaje | Lineas | SHA256 | Dependencias |",
+        "|---------|----------|--------|--------|--------------|",
+    ]
+    for f in files:
+        deps = ", ".join(f.get("declared", [])) or "-"
+        L.append(
+            f"| `{f['filename']}` | {f['language']} | {f['line_count']} | "
+            f"`{f['sha256']}` | {deps} |"
+        )
+
+    L += [
+        "",
+        "## 4. Conversacion entre agentes (resumida)",
+        "",
+        "| # | De -> Para | Tarea | Evidencia | Resultado | Confianza | Siguiente accion |",
+        "|---|-----------|-------|-----------|-----------|-----------|------------------|",
+    ]
+    for i, m in enumerate(conversation, 1):
+        L.append(
+            f"| {i} | {m['de']} -> {m['para']} | {m['tarea']} | {m['evidencia']} | "
+            f"{m['resultado']} | {_conf(m['confianza'])} | {m['siguiente_accion']} |"
+        )
+
+    L += ["", "## 5. Hallazgos validados", ""]
+    for f in files:
+        L.append(f"### `{f['filename']}`")
+        L.append("")
+        validaciones = {
+            v.get("referencia", ""): v for v in f["val_data"].get("validaciones", [])
+        }
+        hallazgos = f["audit"].get("hallazgos", [])
+        if not hallazgos:
+            L.append("_Sin hallazgos de seguridad._")
+            L.append("")
+        for h in hallazgos:
+            titulo = h.get("titulo", "")
+            v = validaciones.get(titulo, {})
+            veredicto = VEREDICTO_ICON.get(v.get("veredicto", ""), "[?] sin veredicto")
+            L += [
+                f"- **[{h.get('severidad')}] {titulo}** (linea {h.get('linea')}, {h.get('cwe', 'N/A')})",
+                f"  - Evidencia: `{h.get('evidencia')}`",
+                f"  - Validador: {veredicto} ({_conf(v.get('confianza'))}) - {v.get('justificacion', 'sin justificacion')}",
+                f"  - Reescritura segura: {h.get('reescritura_segura', '')}",
+            ]
+        riesgosas = [
+            d
+            for d in f["dep_data"].get("dependencias", [])
+            if d.get("estado") in ("sospechoso", "desconocido")
+        ]
+        if riesgosas:
+            L.append("  - Dependencias riesgosas:")
+            for d in riesgosas:
+                L.append(
+                    f"    - `{d.get('paquete')}` ({d.get('estado')}): "
+                    f"{d.get('riesgo', d.get('recomendacion', ''))}"
+                )
+        L.append("")
+
+    L += [
+        "## 6. Riesgos priorizados",
+        "",
+        "| Prioridad | Severidad | Riesgo | Archivo | Justificacion |",
+        "|-----------|-----------|--------|---------|---------------|",
+    ]
+    for i, r in enumerate(report.get("riesgos_priorizados", []), 1):
+        L.append(
+            f"| {i} | {r.get('severidad')} | {r.get('titulo')} | "
+            f"`{r.get('archivo', '-')}` | {r.get('justificacion', '')} |"
+        )
+
+    L += ["", "## 7. Recomendaciones", ""]
+    for rec in report.get("recomendaciones", []):
+        L.append(f"- {rec}")
+
+    L += [
+        "",
+        "## 8. Validacion humana",
+        "",
+        "El sistema **recomienda**, el analista humano **valida**. Resumen del Agente Validador:",
+        "",
+        f"- Hallazgos de seguridad detectados: {total_hallazgos}",
+        f"- Validaciones realizadas (seguridad + dependencias): {total_validaciones}",
+        f"- Confirmados por el validador: {total_confirmados}",
+        f"- Falsos positivos descartados: {total_fp}",
+        "",
+        "Puntos que requieren revision humana explicita:",
+        "",
+    ]
+    human_points = []
+    for f in files:
+        for p in f["audit"].get("requiere_validacion_humana", []):
+            human_points.append(f"- ({f['filename']}) {p}")
+        for v in f["val_data"].get("validaciones", []):
+            if v.get("veredicto") == "REVISION_HUMANA":
+                human_points.append(
+                    f"- ({f['filename']}) {v.get('referencia')}: {v.get('justificacion', '')}"
+                )
+    L += human_points or ["- (ninguno marcado automaticamente)"]
+
+    L += ["", "## 9. Limitaciones del sistema", ""]
+    limitaciones = report.get("limitaciones") or [
+        "El analisis depende del criterio del LLM y puede variar entre ejecuciones.",
+        "El catalogo de dependencias es local y no consulta los registros en vivo.",
+        "No se ejecuta el codigo: el analisis es estatico y puede omitir fallos en runtime.",
+    ]
+    for lim in limitaciones:
+        L.append(f"- {lim}")
+
+    L += [
+        "",
+        "---",
+        "",
+        "*Sistema multi-agente sobre MCP real. La IA recomienda, el humano valida.*",
+        "*PoC academica defensiva - Grupo 3 - Guardrails para Vibe Coding.*",
+        "",
+    ]
+    return "\n".join(L)
+
+
+def render_agentic_html(context: dict) -> str:
+    """Version HTML autocontenida del reporte agentic (para la demo)."""
+    files = context["files"]
+    conversation = context["conversation"]
+    report = context["report"]
+    agents = context["agents"]
+
+    css = """
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: #f8fafc; color: #0f172a; margin: 0; padding: 2rem; line-height: 1.55; }
+    .wrap { max-width: 1040px; margin: 0 auto; }
+    header { background: linear-gradient(135deg, #0f172a, #1e293b); color: white;
+             padding: 2rem; border-radius: 14px; margin-bottom: 1.5rem; }
+    header h1 { margin: 0 0 .4rem 0; font-size: 1.55rem; }
+    header p { margin: 0; opacity: .85; }
+    h2 { font-size: 1.2rem; margin-top: 2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: .35rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .86rem; }
+    th, td { border: 1px solid #e2e8f0; padding: .5rem .6rem; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; color: #334155; }
+    code { background: #e2e8f0; padding: .1rem .35rem; border-radius: 4px; font-size: .82rem; }
+    .card { background: white; padding: 1.25rem 1.5rem; border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 1rem; }
+    .ok { color: #16a34a; font-weight: 700; }
+    .fp { color: #64748b; font-weight: 700; }
+    .hum { color: #ca8a04; font-weight: 700; }
+    .badge { color: white; padding: .12rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+    ul { margin: .3rem 0 .8rem 1.1rem; }
+    footer { text-align: center; color: #94a3b8; font-size: .82rem; margin-top: 2rem; padding: 1rem; }
+    """
+
+    def chip(sev: str) -> str:
+        return f'<span class="badge" style="background:{SEVERITY_COLORS.get(sev, "#475569")}">{_esc(sev)}</span>'
+
+    P: list[str] = [
+        "<!doctype html><html lang='es'><head><meta charset='utf-8'>",
+        "<title>Reporte Agentic - Grupo 3</title>",
+        f"<style>{css}</style></head><body><div class='wrap'>",
+        "<header><h1>Sistema Agentic de Guardrails - Reporte Final</h1>",
+        f"<p>Grupo 3 &middot; Modelo: <code>{_esc(MODEL)}</code> &middot; 5 agentes sobre MCP real</p></header>",
+        "<div class='card'><h2 style='margin-top:0'>1. Problema analizado</h2>",
+        f"<p>{_esc(report.get('problema', ''))}</p>",
+        f"<p>{_esc(report.get('resumen_ejecutivo', ''))}</p></div>",
+        "<div class='card'><h2 style='margin-top:0'>2. Agentes utilizados</h2>",
+        "<table><tr><th>Agente</th><th>Rol</th><th>Motor</th></tr>",
+    ]
+    for a in agents:
+        P.append(
+            f"<tr><td>{_esc(a['nombre'])}</td><td>{_esc(a['rol'])}</td><td>{_esc(a['motor'])}</td></tr>"
+        )
+    P.append("</table></div>")
+
+    P.append("<div class='card'><h2 style='margin-top:0'>3. Conversacion entre agentes</h2>")
+    P.append(
+        "<table><tr><th>#</th><th>De &rarr; Para</th><th>Tarea</th><th>Resultado</th>"
+        "<th>Confianza</th><th>Siguiente accion</th></tr>"
+    )
+    for i, m in enumerate(conversation, 1):
+        P.append(
+            f"<tr><td>{i}</td><td>{_esc(m['de'])} &rarr; {_esc(m['para'])}</td>"
+            f"<td>{_esc(m['tarea'])}</td><td>{_esc(m['resultado'])}</td>"
+            f"<td>{_conf(m['confianza'])}</td><td>{_esc(m['siguiente_accion'])}</td></tr>"
+        )
+    P.append("</table></div>")
+
+    P.append("<div class='card'><h2 style='margin-top:0'>4. Hallazgos validados</h2>")
+    veredicto_class = {"CONFIRMADO": "ok", "FALSO_POSITIVO": "fp", "REVISION_HUMANA": "hum"}
+    for f in files:
+        P.append(f"<h3><code>{_esc(f['filename'])}</code></h3>")
+        validaciones = {v.get("referencia", ""): v for v in f["val_data"].get("validaciones", [])}
+        hallazgos = f["audit"].get("hallazgos", [])
+        if not hallazgos:
+            P.append("<p><em>Sin hallazgos de seguridad.</em></p>")
+        P.append("<ul>")
+        for h in hallazgos:
+            v = validaciones.get(h.get("titulo", ""), {})
+            cls = veredicto_class.get(v.get("veredicto", ""), "hum")
+            P.append(
+                f"<li>{chip(h.get('severidad', 'BAJA'))} <b>{_esc(h.get('titulo', ''))}</b> "
+                f"(linea {_esc(h.get('linea', '?'))}, {_esc(h.get('cwe', 'N/A'))}) &mdash; "
+                f"<span class='{cls}'>{_esc(v.get('veredicto', 'sin veredicto'))}</span> "
+                f"({_conf(v.get('confianza'))})<br><small>{_esc(v.get('justificacion', ''))}</small></li>"
+            )
+        P.append("</ul>")
+    P.append("</div>")
+
+    P.append("<div class='card'><h2 style='margin-top:0'>5. Riesgos priorizados</h2>")
+    P.append("<table><tr><th>#</th><th>Severidad</th><th>Riesgo</th><th>Archivo</th><th>Justificacion</th></tr>")
+    for i, r in enumerate(report.get("riesgos_priorizados", []), 1):
+        P.append(
+            f"<tr><td>{i}</td><td>{chip(r.get('severidad', 'BAJA'))}</td>"
+            f"<td>{_esc(r.get('titulo', ''))}</td><td><code>{_esc(r.get('archivo', '-'))}</code></td>"
+            f"<td>{_esc(r.get('justificacion', ''))}</td></tr>"
+        )
+    P.append("</table></div>")
+
+    P.append("<div class='card'><h2 style='margin-top:0'>6. Recomendaciones</h2><ul>")
+    for rec in report.get("recomendaciones", []):
+        P.append(f"<li>{_esc(rec)}</li>")
+    P.append("</ul></div>")
+
+    P.append("<div class='card'><h2 style='margin-top:0'>7. Limitaciones del sistema</h2><ul>")
+    for lim in report.get("limitaciones", []):
+        P.append(f"<li>{_esc(lim)}</li>")
+    P.append("</ul></div>")
+
+    P.append(
+        "<footer>Sistema multi-agente sobre MCP real &middot; La IA recomienda, el humano valida"
+        " &middot; Grupo 3</footer></div></body></html>"
+    )
+    return "".join(P)

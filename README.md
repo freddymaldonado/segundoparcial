@@ -115,18 +115,43 @@ python src/client_demo.py
 
 El modelo se configura con `OPENAI_MODEL` (default `gpt-5.1`).
 
+## Parte II: Sistema Agentic (multi-agente sobre MCP)
+
+La evolucion del proyecto convierte el auditor de un solo paso en un sistema de
+**5 agentes de IA que conversan** sobre el mismo servidor MCP: Recoleccion,
+Seguridad, Dependencias, Validador y Reporte. Cada agente intercambia mensajes
+estructurados y el Validador actua como barrera anti-alucinacion.
+
+```bash
+export OPENAI_API_KEY="sk-..."
+python src/orchestrator.py
+```
+
+Genera en `output/`:
+
+- `reporte-agentic.md` y `reporte-agentic.html` (reporte final con 9 secciones).
+- `conversacion-agentes.json` (intercambio completo entre agentes).
+
+Detalle de la arquitectura, los agentes y el uso de vibe coding en
+[docs/ARQUITECTURA-AGENTIC.md](docs/ARQUITECTURA-AGENTIC.md).
+
 ## Estructura del proyecto
 
 ```text
 Grupo 3 - Guardrails para Vibe Coding/
   README.md            # este archivo
   PLAN.md              # plan y decisiones de arquitectura
+  docs/
+    ARQUITECTURA-AGENTIC.md  # arquitectura agentic + vibe coding (Parte II)
   samples/             # codigo vulnerable generado por IA (insumo estatico)
   src/
-    server.py          # servidor MCP con los 3 tools (guardrails)
-    auditor.py         # prompt defensivo + llamada al LLM + reporte
-    client_demo.py     # cliente MCP que orquesta la demo
-  output/              # reporte.md generado
+    server.py          # servidor MCP con los tools (guardrails)
+    auditor.py         # prompt defensivo + LLM + render de reportes
+    agents.py          # 5 agentes + protocolo de mensajes (Parte II)
+    orchestrator.py    # cliente MCP que coordina a los agentes (Parte II)
+    client_demo.py     # cliente MCP del flujo clasico de un solo paso
+    webapp.py          # interfaz web drag & drop
+  output/              # reportes generados
   presentacion/        # material de la exposicion
   Dockerfile
   docker-compose.yml

@@ -19,7 +19,7 @@ function pingHost(host) {
 }
 
 function renderComment(comment) {
-  // FALLO: XSS, inserta HTML sin escapar
+  // FALLO: XSS, inserta HTML sin escape
   document.getElementById("comments").innerHTML += `<p>${comment}</p>`;
 }
 

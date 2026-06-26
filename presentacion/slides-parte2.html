@@ -210,39 +210,6 @@ flowchart TB
       &mdash; más rápido y más realista.</p>
     </section>
 
-    <!-- 5. DIAGRAMA DE SECUENCIA · conversación entre agentes -->
-    <section class="slide diagram-slide">
-      <div class="kicker">Conversación entre agentes &middot; paralelo + back-and-forth ↔</div>
-      <div class="diagram">
-        <pre class="mermaid">
-sequenceDiagram
-    autonumber
-    participant R as 📥 Recolección
-    participant S as 🛡️ Seguridad
-    participant D as 📦 Dependencias
-    participant V as ✅ Validador
-    participant P as 📝 Reporte
-    actor H as 👤 Humano
-
-    R->>S: código + contexto
-    R->>D: dependencias declaradas
-    par Análisis en paralelo
-        S-->>V: hallazgos de seguridad (confianza 0.8)
-    and
-        D-->>V: deps sospechosas (confianza 0.7)
-    end
-    Note over V: Revisa la evidencia real en el código
-    V->>S: ↔ ¿confirmas este hallazgo dudoso?
-    S-->>V: ↔ lo mantengo: la línea 42 lo respalda
-    V->>D: ↔ ¿'ai-secure-validator' existe de verdad?
-    D-->>V: ↔ sin evidencia → escalar a humano
-    V->>P: hallazgos validados + veredictos
-    P->>H: reporte final (riesgos priorizados)
-    Note over H: El humano valida y decide
-        </pre>
-      </div>
-    </section>
-
     <!-- 6. Protocolo de mensaje (7 campos) -->
     <section class="slide">
       <div class="kicker">No es un chatbot &middot; es un protocolo estructurado</div>
@@ -314,7 +281,7 @@ sequenceDiagram
 
     <nav class="nav">
       <button id="prev">&larr;</button>
-      <span id="counter">1 / 8</span>
+      <span id="counter">1 / 7</span>
       <button id="next">&rarr;</button>
     </nav>
     <div class="hint">Flechas &larr; &rarr; o barra espaciadora &middot; F: pantalla completa</div>

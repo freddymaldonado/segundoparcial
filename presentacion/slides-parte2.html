@@ -128,16 +128,6 @@
       <p class="authors">Grupo 3 &middot; Freddy Maldonado &middot; Joaquin Peredo</p>
     </section>
 
-    <!-- 2. El problema -->
-    <section class="slide">
-      <div class="kicker">El problema</div>
-      <h2>Cuando la IA escribe el código,<br /><span class="accent">¿quién lo audita?</span></h2>
-      <p class="big">Un solo prompt no basta: hace falta
-      <span class="accent">colaboración, validación y trazabilidad.</span></p>
-      <p class="sub">Convertimos el auditor en una arquitectura donde cada agente tiene un rol,
-      conversa con los demás y <b>nada llega al reporte sin pasar por el Validador y el humano</b>.</p>
-    </section>
-
     <!-- 3. DIAGRAMA DE ARQUITECTURA -->
     <section class="slide diagram-slide">
       <div class="kicker">Arquitectura MCP &middot; Cliente &rarr; Servidor &rarr; Agentes &rarr; Reporte</div>
@@ -147,7 +137,7 @@ flowchart TB
     U(["👤 Analista humano"]):::human
     EV[("📄 Evidencia · código vibe-coded")]:::evi
 
-    subgraph CLI["🖥️ CLIENTE MCP · WebApp — FastAPI · streaming NDJSON · asyncio"]
+    subgraph CLI["🖥️ CLIENTE MCP · WebApp — FastAPI · streaming en vivo"]
         direction LR
         WEB["Recibe y aísla<br/>los archivos"]:::web
         ORQ["Orquestador<br/>agentic"]:::web
@@ -217,7 +207,7 @@ flowchart TB
           <div class="rl">Prioriza riesgos y redacta para el analista humano</div></div>
       </div>
       <p class="sub"><span class="accent">Seguridad y Dependencias corren en paralelo</span>
-      (asyncio) &mdash; más rápido y más realista.</p>
+      &mdash; más rápido y más realista.</p>
     </section>
 
     <!-- 5. DIAGRAMA DE SECUENCIA · conversación entre agentes -->
@@ -294,9 +284,9 @@ sequenceDiagram
       <div class="kicker">Uso de Vibe Coding</div>
       <h2>Construido con IA,<br /><span class="accent">asegurado por nosotros</span></h2>
       <ul class="checks">
-        <li><b>Prompts:</b> "convertir el auditor en multi-agente sobre MCP", "protocolo de 7 campos", "back-and-forth Validador ↔ autor"</li>
-        <li><b>Errores corregidos:</b> riesgo de path traversal → <code>_safe_resolve</code>; la IA inventaba paquetes → veredicto <b>determinista</b> de dependencias</li>
-        <li><b>Decisiones de seguridad:</b> el servidor nunca ejecuta el código; validación humana obligatoria antes del reporte</li>
+        <li><b>Le pedimos a la IA</b> que convirtiera nuestro auditor en un equipo de agentes que se comunican entre sí y debaten sus hallazgos.</li>
+        <li><b>La IA cometió errores y los corregimos:</b> dejaba abrir archivos fuera de la carpeta permitida, y a veces se “inventaba” librerías que no existen.</li>
+        <li><b>Nosotros pusimos las reglas de seguridad:</b> el servidor solo lee y escribe &mdash; <b>nunca ejecuta el código</b> &mdash; y un humano siempre valida antes del reporte.</li>
       </ul>
     </section>
 
@@ -324,7 +314,7 @@ sequenceDiagram
 
     <nav class="nav">
       <button id="prev">&larr;</button>
-      <span id="counter">1 / 9</span>
+      <span id="counter">1 / 8</span>
       <button id="next">&rarr;</button>
     </nav>
     <div class="hint">Flechas &larr; &rarr; o barra espaciadora &middot; F: pantalla completa</div>

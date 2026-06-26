@@ -293,6 +293,81 @@
       .veredicto.CONFIRMADO { background: #dcfce7; color: #166534; }
       .veredicto.FALSO_POSITIVO { background: #e2e8f0; color: #475569; }
       .veredicto.REVISION_HUMANA { background: #fef9c3; color: #854d0e; }
+
+      /* ---- Bloque/tarjeta generica de la vista agentic ---- */
+      .ag-block { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+                  padding: 1.2rem 1.3rem; margin-bottom: 1.5rem; }
+      .ag-block > h3 { margin: 0 0 .25rem; font-size: 1rem; display: flex; align-items: center; gap: .5rem; }
+      .ag-block > .sub { margin: 0 0 1rem; font-size: .82rem; color: var(--muted); }
+
+      /* ---- Diagrama de arquitectura MCP ---- */
+      .arch { display: grid; gap: .7rem; }
+      .arch-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; }
+      .arch-node { border: 1px solid var(--line); border-radius: 12px; padding: .75rem .85rem; background: var(--bg);
+                   position: relative; }
+      .arch-node .t { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 800; }
+      .arch-node .v { font-weight: 800; font-size: .9rem; margin-top: .1rem; }
+      .arch-node .d { font-size: .74rem; color: var(--muted); margin-top: .2rem; line-height: 1.35; }
+      .arch-node.client { border-left: 4px solid var(--brand); }
+      .arch-node.server { border-left: 4px solid var(--baja); }
+      .arch-node.agent  { border-left: 4px solid var(--deps); }
+      .arch-node.evidence { border-left: 4px solid var(--media); }
+      .arch-node.report { border-left: 4px solid var(--crit); }
+      .arch-flow { text-align: center; color: var(--deps); font-weight: 800; font-size: 1.1rem; letter-spacing: .2em; }
+      .arch-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
+      .arch-tag { font-size: .68rem; font-family: ui-monospace, monospace; background: #ecfdf5; color: #047857;
+                  border: 1px solid #a7f3d0; padding: .12rem .45rem; border-radius: 6px; font-weight: 700; }
+
+      /* ---- Catalogo de herramientas MCP ---- */
+      .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .6rem; }
+      .tool-card { border: 1px solid var(--line); border-radius: 10px; padding: .65rem .8rem; background: var(--bg);
+                   transition: border-color .15s, transform .15s; }
+      .tool-card.used { border-color: var(--baja); box-shadow: inset 3px 0 0 var(--baja); }
+      .tool-card .tn { font-family: ui-monospace, monospace; font-weight: 800; font-size: .82rem; color: var(--ink);
+                       display: flex; align-items: center; justify-content: space-between; gap: .4rem; }
+      .tool-card .tn .calls { font-size: .66rem; background: var(--baja); color: #fff; border-radius: 999px;
+                              padding: .05rem .4rem; font-weight: 800; }
+      .tool-card .td { font-size: .73rem; color: var(--muted); margin-top: .25rem; line-height: 1.35; }
+
+      /* ---- Consola de logs MCP estilo terminal ---- */
+      .console { background: #0b1020; border: 1px solid #1f2937; border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; }
+      .console-bar { display: flex; align-items: center; gap: .5rem; padding: .6rem .9rem; background: #111827;
+                     border-bottom: 1px solid #1f2937; }
+      .console-bar .dot { width: 11px; height: 11px; border-radius: 50%; }
+      .console-bar .r { background: #ff5f56; } .console-bar .y { background: #ffbd2e; } .console-bar .g { background: #27c93f; }
+      .console-bar .title { color: #9ca3af; font-family: ui-monospace, monospace; font-size: .76rem; margin-left: .4rem; }
+      .console-bar .live { margin-left: auto; color: #27c93f; font-size: .7rem; font-weight: 800; display: flex; align-items: center; gap: .35rem; }
+      .console-bar .live .blink { width: 7px; height: 7px; border-radius: 50%; background: #27c93f; animation: pulse 1s infinite; }
+      .console-body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem; line-height: 1.5;
+                      padding: .8rem 1rem; max-height: 320px; overflow-y: auto; color: #cbd5e1; }
+      .log-line { display: flex; gap: .6rem; padding: .05rem 0; animation: slidein .2s ease; white-space: pre-wrap; word-break: break-word; }
+      .log-line .lt { color: #4b5563; flex-shrink: 0; }
+      .log-line .ls { flex-shrink: 0; font-weight: 700; }
+      .log-line .lm { color: #e5e7eb; }
+      .log-line.info  .ls { color: #60a5fa; } .log-line.info .lm { color: #cbd5e1; }
+      .log-line.tool  .ls { color: #c084fc; } .log-line.tool .lm { color: #ddd6fe; }
+      .log-line.ok    .ls { color: #34d399; } .log-line.ok .lm { color: #d1fae5; }
+      .log-line.warn  .ls { color: #fbbf24; } .log-line.warn .lm { color: #fde68a; }
+      .log-line.agent .ls { color: #f472b6; } .log-line.agent .lm { color: #fbcfe8; }
+      .log-line.report .ls { color: #f87171; } .log-line.report .lm { color: #fecaca; }
+
+      /* ---- Seccion Vibe Coding ---- */
+      .vibe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: .8rem; }
+      .vibe-card { border: 1px solid var(--line); border-radius: 12px; padding: .9rem 1rem; background: var(--bg); }
+      .vibe-card h4 { margin: 0 0 .5rem; font-size: .82rem; display: flex; align-items: center; gap: .4rem; }
+      .vibe-card.prompts { border-left: 4px solid var(--brand); }
+      .vibe-card.errors { border-left: 4px solid var(--alta); }
+      .vibe-card.fixes { border-left: 4px solid var(--baja); }
+      .vibe-card.security { border-left: 4px solid var(--deps); }
+      .vibe-card ul { margin: 0; padding-left: 1.1rem; }
+      .vibe-card li { font-size: .8rem; margin: .3rem 0; line-height: 1.4; color: #334155; }
+      .vibe-card code { background: #e2e8f0; padding: .08rem .35rem; border-radius: 4px; font-size: .76rem; }
+
+      details.collapsible > summary { cursor: pointer; font-weight: 700; font-size: .82rem; color: var(--deps);
+                                      list-style: none; user-select: none; padding: .2rem 0; }
+      details.collapsible > summary::-webkit-details-marker { display: none; }
+      details.collapsible > summary::before { content: "\25B8 "; }
+      details.collapsible[open] > summary::before { content: "\25BE "; }
     </style>
   </head>
   <body>
@@ -336,9 +411,70 @@
 
       <!-- Vista del modo agentic -->
       <section id="agentic" class="hidden">
+
+        <!-- 1. Arquitectura MCP -->
+        <div class="ag-block">
+          <h3>&#127959;&#65039; Arquitectura MCP del sistema</h3>
+          <p class="sub">Cliente MCP, servidor MCP, herramientas, agentes, evidencia y reporte final.</p>
+          <div class="arch">
+            <div class="arch-row">
+              <div class="arch-node client">
+                <div class="t">Cliente MCP</div>
+                <div class="v">Webapp FastAPI</div>
+                <div class="d">Orquesta agentes y consume las herramientas del servidor por stdio.</div>
+              </div>
+              <div class="arch-node server">
+                <div class="t">Servidor MCP</div>
+                <div class="v">guardrails-auditor</div>
+                <div class="d">Guardrail: solo lee muestras y escribe reportes. Nunca ejecuta el codigo auditado.</div>
+                <div id="arch-tools" class="arch-tags"></div>
+              </div>
+            </div>
+            <div class="arch-flow">&#9660;</div>
+            <div class="arch-row">
+              <div class="arch-node agent"><div class="t">Agente 1</div><div class="v">&#128228; Recoleccion</div><div class="d">Lee codigo y dependencias via MCP.</div></div>
+              <div class="arch-node agent"><div class="t">Agente 2 &middot; 3 (paralelo)</div><div class="v">&#128737;&#65039; Seguridad / &#128230; Dependencias</div><div class="d">Hallazgos de vulnerabilidades y librerias riesgosas.</div></div>
+              <div class="arch-node agent"><div class="t">Agente 4</div><div class="v">&#9989; Validador</div><div class="d">Confirma o descarta cada hallazgo (anti-alucinacion).</div></div>
+              <div class="arch-node agent"><div class="t">Agente 5</div><div class="v">&#128221; Reporte</div><div class="d">Prioriza riesgos y recomienda.</div></div>
+            </div>
+            <div class="arch-flow">&#9660;</div>
+            <div class="arch-row">
+              <div class="arch-node evidence">
+                <div class="t">Evidencia utilizada</div>
+                <div class="v">&#128196; Codigo + hashes + dependencias</div>
+                <div class="d">Mensajes estructurados con evidencia trazable entre agentes.</div>
+              </div>
+              <div class="arch-node report">
+                <div class="t">Reporte final</div>
+                <div class="v">&#128202; Markdown con validacion humana</div>
+                <div class="d">Problema, hallazgos, riesgos priorizados, recomendaciones y limitaciones.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Herramientas MCP -->
+        <div class="ag-block">
+          <h3>&#128295; Herramientas MCP disponibles</h3>
+          <p class="sub">Expuestas por el servidor y llamadas por los agentes durante el analisis.</p>
+          <div id="tools-grid" class="tools-grid"></div>
+        </div>
+
+        <!-- 3. Pipeline de agentes -->
         <div class="section-title">Agentes trabajando &middot; Seguridad y Dependencias corren en paralelo</div>
         <div id="agent-pipeline" class="agentic-pipeline"></div>
 
+        <!-- 4. Consola de logs MCP en vivo -->
+        <div class="console">
+          <div class="console-bar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="title">guardrails-auditor &mdash; MCP runtime log</span>
+            <span id="console-live" class="live hidden"><span class="blink"></span>EN VIVO</span>
+          </div>
+          <div id="console-body" class="console-body"></div>
+        </div>
+
+        <!-- 5. Conversacion entre agentes -->
         <div class="convo">
           <h3>Conversacion entre agentes (en vivo)</h3>
           <p class="mode-hint" style="margin:-.4rem 0 .8rem">
@@ -348,6 +484,7 @@
           <div id="convo-feed" class="convo-feed"></div>
         </div>
 
+        <!-- 6. Metricas + reporte final -->
         <section id="agentic-metrics" class="metrics hidden"></section>
 
         <div id="cards-head-agentic" class="cards-head hidden">
@@ -355,6 +492,50 @@
           <button id="downloadbtn-agentic" class="download">&#11015; Descargar reporte agentic .md</button>
         </div>
         <div id="report-final" class="report-final"></div>
+
+        <!-- 7. Vibe Coding -->
+        <div id="vibe-block" class="ag-block hidden">
+          <h3>&#129302; Como se construyo con Vibe Coding</h3>
+          <p class="sub">Documentacion del uso de IA para construir y endurecer el sistema (requisito 5).</p>
+          <div class="vibe-grid">
+            <div class="vibe-card prompts">
+              <h4>&#128172; Prompts principales</h4>
+              <ul>
+                <li>"Convierte el auditor de un solo paso en 5 agentes que conversen sobre MCP."</li>
+                <li>"El Validador debe marcar cada hallazgo como CONFIRMADO, FALSO_POSITIVO o REVISION_HUMANA."</li>
+                <li>"Corre Seguridad y Dependencias en paralelo con asyncio y transmite todo en vivo a la UI."</li>
+                <li>"Detecta dependencias inventadas (slopsquatting) con un catalogo determinista."</li>
+              </ul>
+            </div>
+            <div class="vibe-card errors">
+              <h4>&#9888;&#65039; Errores encontrados</h4>
+              <ul>
+                <li>El LLM inventaba hallazgos sin respaldo en el codigo (alucinaciones).</li>
+                <li>Importacion circular entre el orquestador y los agentes.</li>
+                <li>Metricas inconsistentes mezclando hallazgos con validaciones.</li>
+                <li>Un rename dejo una variable usada pero no declarada en una muestra.</li>
+              </ul>
+            </div>
+            <div class="vibe-card fixes">
+              <h4>&#128296; Correcciones del grupo</h4>
+              <ul>
+                <li>Se agrego el Agente Validador que cruza cada hallazgo contra el codigo real.</li>
+                <li>Se movio <code>resumen_para_reporte</code> a un modulo comun.</li>
+                <li>Se separaron las metricas: hallazgos, validaciones, confirmados y FP.</li>
+                <li>Revision humana del codigo generado antes de aceptarlo.</li>
+              </ul>
+            </div>
+            <div class="vibe-card security">
+              <h4>&#128272; Decisiones de seguridad</h4>
+              <ul>
+                <li>El servidor MCP <strong>nunca ejecuta</strong> el codigo auditado, solo lo lee.</li>
+                <li><code>_safe_resolve()</code> evita path traversal fuera de las carpetas permitidas.</li>
+                <li>Escritura restringida a <code>output/</code> y solo extensiones permitidas.</li>
+                <li>Todo termina en <strong>validacion humana</strong>: la IA no actua sola.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="metrics" class="metrics hidden"></section>
@@ -401,6 +582,12 @@
       const reportFinal = document.getElementById("report-final");
       const cardsHeadAgentic = document.getElementById("cards-head-agentic");
       const downloadbtnAgentic = document.getElementById("downloadbtn-agentic");
+      const archTools = document.getElementById("arch-tools");
+      const toolsGrid = document.getElementById("tools-grid");
+      const consoleBody = document.getElementById("console-body");
+      const consoleLive = document.getElementById("console-live");
+      const vibeBlock = document.getElementById("vibe-block");
+      const toolCalls = {};
 
       let mode = "clasico";
       let agenticReportMd = "";
@@ -540,6 +727,12 @@
         agenticMetrics.innerHTML = "";
         reportFinal.innerHTML = "";
         cardsHeadAgentic.classList.add("hidden");
+        consoleBody.innerHTML = "";
+        consoleLive.classList.add("hidden");
+        toolsGrid.innerHTML = "";
+        archTools.innerHTML = "";
+        vibeBlock.classList.add("hidden");
+        for (const k in toolCalls) delete toolCalls[k];
         statusEl.textContent = "";
       }
 
@@ -856,6 +1049,55 @@
         return `<span class="who"><span>${ico}</span><span class="a-badge">${esc(short)}</span></span>`;
       }
 
+      // ---- Consola de logs MCP en vivo ----
+      function appendLog(ev) {
+        const tag = (ev.source || "").toUpperCase();
+        const div = document.createElement("div");
+        div.className = `log-line ${ev.level || "info"}`;
+        div.innerHTML =
+          `<span class="lt">${esc(ev.ts || "")}</span>` +
+          `<span class="ls">[${esc(tag)}]</span>` +
+          `<span class="lm">${esc(ev.message || "")}</span>`;
+        consoleBody.appendChild(div);
+        consoleBody.scrollTop = consoleBody.scrollHeight;
+        // Marcar herramienta usada si el log es una llamada MCP.
+        if (ev.level === "tool" && ev.message) {
+          const m = ev.message.match(/→\s*([a-z_]+)\(/i);
+          if (m) markToolUsed(m[1]);
+        }
+      }
+
+      const TOOL_ICONS = {
+        list_targets: "📁", read_source: "📄", extraer_dependencias: "🧩",
+        verificar_dependencias: "🔎", write_report: "💾", write_html: "🖥️",
+        registrar_conversacion: "🗂️",
+      };
+
+      function renderTools(tools) {
+        toolsGrid.innerHTML = tools
+          .map(
+            (t) => `
+            <div class="tool-card" data-tool="${esc(t.name)}">
+              <div class="tn"><span>${TOOL_ICONS[t.name] || "🔧"} ${esc(t.name)}()</span><span class="calls hidden">0</span></div>
+              <div class="td">${esc(t.description || "")}</div>
+            </div>`
+          )
+          .join("");
+        archTools.innerHTML = tools
+          .map((t) => `<span class="arch-tag">${esc(t.name)}()</span>`)
+          .join("");
+      }
+
+      function markToolUsed(name) {
+        toolCalls[name] = (toolCalls[name] || 0) + 1;
+        const card = toolsGrid.querySelector(`.tool-card[data-tool="${CSS.escape(name)}"]`);
+        if (!card) return;
+        card.classList.add("used");
+        const calls = card.querySelector(".calls");
+        calls.classList.remove("hidden");
+        calls.textContent = `×${toolCalls[name]}`;
+      }
+
       function appendMessage(m) {
         const conf = typeof m.confianza === "number" ? Math.round(m.confianza * 100) : null;
         const cc = typeof m.confianza === "number" ? confClass(m.confianza) : "mid";
@@ -914,34 +1156,67 @@
         agenticMetrics.classList.remove("hidden");
       }
 
-      function renderFinalReport(report) {
+      function renderFinalReport(report, fileEvidence) {
         const r = report || {};
         const prio = Array.isArray(r.riesgos_priorizados) ? r.riesgos_priorizados : [];
         const recs = Array.isArray(r.recomendaciones) ? r.recomendaciones : [];
         const lims = Array.isArray(r.limitaciones) ? r.limitaciones : [];
-        const human = Array.isArray(r.validacion_humana) ? r.validacion_humana : [];
+        const files = Array.isArray(fileEvidence) ? fileEvidence : [];
+
+        // Validacion humana derivada de las validaciones marcadas REVISION_HUMANA.
+        const human = [];
+        files.forEach((f) => {
+          (f.val_data?.validaciones || []).forEach((v) => {
+            if (v.veredicto === "REVISION_HUMANA") {
+              human.push(`${f.filename}: ${v.titulo || v.hallazgo || "hallazgo"} — ${v.justificacion || v.motivo || "requiere criterio humano"}`);
+            }
+          });
+        });
+        if (Array.isArray(r.validacion_humana)) {
+          r.validacion_humana.forEach((x) => human.push(typeof x === "string" ? x : JSON.stringify(x)));
+        }
 
         const parts = [];
         if (r.problema || r.resumen_ejecutivo) {
           parts.push(`
             <div class="rf-card">
-              <h3>Resumen ejecutivo</h3>
-              ${r.problema ? `<p><strong>Problema:</strong> ${esc(r.problema)}</p>` : ""}
+              <h3>&#128203; Resumen ejecutivo</h3>
+              ${r.problema ? `<p><strong>Problema analizado:</strong> ${esc(r.problema)}</p>` : ""}
               ${r.resumen_ejecutivo ? `<p>${esc(r.resumen_ejecutivo)}</p>` : ""}
+            </div>`);
+        }
+        if (files.length) {
+          parts.push(`
+            <div class="rf-card">
+              <h3>&#128196; Evidencia procesada</h3>
+              <table>
+                <tr><th>Archivo</th><th>Lenguaje</th><th>Lineas</th><th>SHA-256</th><th>Dependencias</th></tr>
+                ${files
+                  .map(
+                    (f) => `<tr>
+                      <td>${esc(f.filename)}</td>
+                      <td>${esc(f.language || "")}</td>
+                      <td>${esc(String(f.line_count ?? ""))}</td>
+                      <td><code>${esc((f.sha256 || "").slice(0, 16))}…</code></td>
+                      <td>${esc((f.declared || []).join(", ") || "—")}</td>
+                    </tr>`
+                  )
+                  .join("")}
+              </table>
             </div>`);
         }
         if (prio.length) {
           parts.push(`
             <div class="rf-card prio">
-              <h3>Riesgos priorizados</h3>
+              <h3>&#128293; Riesgos priorizados</h3>
               <table>
                 <tr><th>#</th><th>Riesgo</th><th>Severidad</th><th>Archivo</th></tr>
                 ${prio
                   .map(
                     (p, i) => `<tr>
                       <td>${i + 1}</td>
-                      <td>${esc(p.riesgo || p.descripcion || p.titulo || "")}</td>
-                      <td>${esc(p.severidad || "")}</td>
+                      <td>${esc(p.riesgo || p.descripcion || p.titulo || "")}${p.justificacion ? `<br><span style="color:var(--muted);font-size:.78rem">${esc(p.justificacion)}</span>` : ""}</td>
+                      <td><span class="chip ${esc(p.severidad || "")}">${esc(p.severidad || "")}</span></td>
                       <td>${esc(p.archivo || "")}</td>
                     </tr>`
                   )
@@ -952,21 +1227,24 @@
         if (recs.length) {
           parts.push(`
             <div class="rf-card rec">
-              <h3>Recomendaciones</h3>
+              <h3>&#9989; Recomendaciones</h3>
               <ul>${recs.map((x) => `<li>${esc(typeof x === "string" ? x : x.texto || JSON.stringify(x))}</li>`).join("")}</ul>
             </div>`);
         }
-        if (human.length) {
-          parts.push(`
-            <div class="rf-card human">
-              <h3>Requiere validacion humana</h3>
-              <ul>${human.map((x) => `<li>${esc(typeof x === "string" ? x : x.texto || JSON.stringify(x))}</li>`).join("")}</ul>
-            </div>`);
-        }
+        parts.push(`
+          <div class="rf-card human">
+            <h3>&#128100; Validacion humana</h3>
+            ${
+              human.length
+                ? `<p style="font-size:.84rem;color:var(--muted);margin:0 0 .5rem">Hallazgos que el sistema deriva explicitamente a criterio humano antes de actuar:</p>
+                   <ul>${human.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`
+                : `<p style="font-size:.86rem;margin:0">El sistema <strong>no actua de forma autonoma</strong>. Todos los hallazgos confirmados deben ser revisados y aprobados por un analista humano antes de aplicar cualquier cambio.</p>`
+            }
+          </div>`);
         if (lims.length) {
           parts.push(`
             <div class="rf-card limit">
-              <h3>Limitaciones</h3>
+              <h3>&#9888;&#65039; Limitaciones del sistema</h3>
               <ul>${lims.map((x) => `<li>${esc(typeof x === "string" ? x : x.texto || JSON.stringify(x))}</li>`).join("")}</ul>
             </div>`);
         }
@@ -1021,7 +1299,14 @@
         switch (ev.type) {
           case "start":
             renderPipeline(ev.agents);
+            consoleLive.classList.remove("hidden");
             statusEl.innerHTML = `<span class="spinner"></span>Analizando ${(ev.files || []).length} archivo(s)...`;
+            break;
+          case "tools":
+            renderTools(ev.tools || []);
+            break;
+          case "log":
+            appendLog(ev);
             break;
           case "agent":
             setAgentState(ev.agent, ev.state, ev.file);
@@ -1035,12 +1320,15 @@
           case "report":
             AGENT_ORDER.forEach((n) => setAgentState(n, "done"));
             if (ev.metrics) renderAgenticMetrics(ev.metrics);
-            renderFinalReport(ev.report);
+            renderFinalReport(ev.report, ev.files);
             agenticReportMd = ev.report_md || "";
             cardsHeadAgentic.classList.toggle("hidden", !agenticReportMd);
+            vibeBlock.classList.remove("hidden");
+            consoleLive.classList.add("hidden");
             break;
           case "error":
             statusEl.textContent = "Error: " + (ev.detail || "desconocido");
+            consoleLive.classList.add("hidden");
             break;
         }
       }

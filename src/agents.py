@@ -332,3 +332,75 @@ def resumen_para_reporte(files: list[dict]) -> list[dict]:
             }
         )
     return resumen
+
+
+# --------------------------------------------------------------------------- #
+# Back-and-forth: el Validador debate los hallazgos dudosos con su autor       #
+# (deterministico, citando la evidencia ya producida; no consume mas LLM)      #
+# --------------------------------------------------------------------------- #
+def _autor_de(validacion: dict) -> str:
+    """Agente que origino el hallazgo segun su tipo."""
+    return (
+        "Agente de Dependencias"
+        if validacion.get("tipo") == "dependencia"
+        else "Agente de Seguridad"
+    )
+
+
+def validador_cuestiona(validacion: dict, archivo: str) -> AgentMessage:
+    """El Validador devuelve un hallazgo dudoso a su autor pidiendo respaldo."""
+    autor = _autor_de(validacion)
+    ref = validacion.get("referencia", "hallazgo")
+    veredicto = validacion.get("veredicto", "REVISION_HUMANA")
+    motivo = validacion.get("justificacion", "la evidencia en el codigo no es concluyente")
+    return AgentMessage(
+        de="Agente Validador",
+        para=autor,
+        tarea=f"Cuestionar el hallazgo '{ref}' en {archivo}",
+        evidencia=f"Veredicto preliminar: {veredicto}. {motivo}",
+        resultado=f"Se solicita a {autor.replace('Agente de ', '').replace('Agente ', '')} que confirme o reformule el hallazgo",
+        confianza=float(validacion.get("confianza", 0.6)),
+        siguiente_accion=f"Esperar la replica de {autor}",
+        payload={"referencia": ref, "veredicto_preliminar": veredicto, "tipo": "cuestionamiento"},
+    )
+
+
+def agente_responde(validacion: dict, audit: dict, dep_data: dict, archivo: str) -> AgentMessage:
+    """El autor del hallazgo replica al Validador con la evidencia que respalda su postura."""
+    autor = _autor_de(validacion)
+    ref = validacion.get("referencia", "hallazgo")
+    veredicto = validacion.get("veredicto", "REVISION_HUMANA")
+
+    # Recupera la evidencia original que produjo el autor.
+    evidencia_original = ""
+    if autor == "Agente de Seguridad":
+        for h in audit.get("hallazgos", []):
+            if h.get("titulo") == ref:
+                evidencia_original = f"linea {h.get('linea', '?')}: {h.get('evidencia', '')}".strip()
+                break
+    else:
+        for d in dep_data.get("dependencias", []):
+            if d.get("paquete") == ref:
+                evidencia_original = f"paquete '{d.get('paquete')}' clasificado como {d.get('estado')}: {d.get('riesgo', '')}".strip()
+                break
+
+    if veredicto == "FALSO_POSITIVO":
+        resultado = f"Acepto el veredicto: retiro '{ref}' como falso positivo"
+        siguiente = "El Validador descarta el hallazgo del reporte final"
+        postura = "El Validador tiene razon; el codigo no respalda el riesgo reportado."
+    else:  # REVISION_HUMANA u otro
+        resultado = f"Mantengo '{ref}' pero coincido en derivarlo a revision humana"
+        siguiente = "El Validador escala el hallazgo a validacion humana"
+        postura = "La evidencia en el codigo es real, pero su criticidad depende de contexto externo."
+
+    return AgentMessage(
+        de=autor,
+        para="Agente Validador",
+        tarea=f"Responder al cuestionamiento sobre '{ref}' en {archivo}",
+        evidencia=evidencia_original or "evidencia del analisis previo",
+        resultado=resultado,
+        confianza=float(validacion.get("confianza", 0.6)),
+        siguiente_accion=siguiente,
+        payload={"referencia": ref, "postura": postura, "tipo": "replica"},
+    )
+

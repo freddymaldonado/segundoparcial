@@ -31,11 +31,13 @@ from agents import (
     agente_dependencias,
     agente_recoleccion,
     agente_reporte,
+    agente_responde,
     agente_seguridad,
     agente_validador,
     resumen_para_reporte,
+    validador_cuestiona,
 )
-from auditor import render_agentic_report
+from auditor import render_agentic_html, render_agentic_report
 from client_demo import tool_result
 
 SERVER_PATH = Path(__file__).resolve().parent / "server.py"
@@ -205,6 +207,30 @@ async def run_agentic_stream(samples_dir: Path, filenames: list[str]) -> AsyncIt
                 yield _log("agent", "Agente Validador", f"→ {val_msg.para}: {confirmados} confirmado(s), {fp} falso(s) positivo(s).")
                 yield {"type": "agent", "agent": "Agente Validador", "state": "done", "file": name}
 
+                # --- Back-and-forth: el Validador debate los hallazgos dudosos con su autor ---
+                dudosas = [
+                    v
+                    for v in val_data.get("validaciones", [])
+                    if v.get("veredicto") in ("FALSO_POSITIVO", "REVISION_HUMANA")
+                ]
+                if dudosas:
+                    yield _log("info", "orquestador", f"Abriendo debate sobre {len(dudosas[:2])} hallazgo(s) dudoso(s) (ida y vuelta).")
+                for v in dudosas[:2]:
+                    autor = "Agente de Dependencias" if v.get("tipo") == "dependencia" else "Agente de Seguridad"
+                    ref = v.get("referencia", "hallazgo")
+                    # 1) El Validador cuestiona al autor.
+                    q_msg = validador_cuestiona(v, name)
+                    convo.send(q_msg)
+                    yield {"type": "agent", "agent": autor, "state": "running", "file": name}
+                    yield {"type": "message", "message": q_msg.to_dict(), "kind": "debate"}
+                    yield _log("agent", "Agente Validador", f"↔ cuestiona a {autor.replace('Agente de ', '').replace('Agente ', '')} sobre '{ref}' ({v.get('veredicto')}).")
+                    # 2) El autor replica con su evidencia.
+                    r_msg = agente_responde(v, audit, dep_data, name)
+                    convo.send(r_msg)
+                    yield {"type": "message", "message": r_msg.to_dict(), "kind": "debate"}
+                    yield _log("agent", autor, f"↔ responde al Validador: {r_msg.resultado}.")
+                    yield {"type": "agent", "agent": autor, "state": "done", "file": name}
+
                 files.append(
                     {
                         "filename": name,
@@ -249,6 +275,7 @@ async def run_agentic_stream(samples_dir: Path, filenames: list[str]) -> AsyncIt
                 "agents": AGENT_ROSTER,
             }
             report_md = render_agentic_report(context)
+            report_html = render_agentic_html(context)
             yield _log("tool", "MCP", "→ write_report(filename='reporte-agentic.md')")
             try:
                 saved = tool_result(
@@ -258,6 +285,14 @@ async def run_agentic_stream(samples_dir: Path, filenames: list[str]) -> AsyncIt
                     )
                 )
                 yield _log("ok", "MCP", f"✓ write_report() → guardado en {saved.get('path', 'output/')}.")
+                yield _log("tool", "MCP", "→ write_html(filename='reporte-agentic.html')")
+                tool_result(
+                    await session.call_tool(
+                        "write_html",
+                        {"html": report_html, "filename": "reporte-agentic.html"},
+                    )
+                )
+                yield _log("ok", "MCP", "✓ write_html() → reporte HTML persistido.")
                 yield _log("tool", "MCP", "→ registrar_conversacion(filename='conversacion-agentes.json')")
                 logged = tool_result(
                     await session.call_tool(
@@ -274,6 +309,7 @@ async def run_agentic_stream(samples_dir: Path, filenames: list[str]) -> AsyncIt
                 "type": "report",
                 "report": report,
                 "report_md": report_md,
+                "report_html": report_html,
                 "metrics": _metrics(files),
                 "conversation": convo.to_list(),
                 "files": [

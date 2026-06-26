@@ -276,6 +276,15 @@
                                  border-radius: 8px; font-size: .72rem; line-height: 1.45; overflow-x: auto;
                                  font-family: ui-monospace, monospace; white-space: pre-wrap; word-break: break-word; }
       .msg .a-badge { font-weight: 800; }
+      /* Mensajes de debate (back-and-forth Validador <-> autor) */
+      .msg.debate { border-left-color: var(--media); border-left-style: dashed; background: #fffbeb;
+                    margin-left: 1.5rem; position: relative; }
+      .msg.debate::before { content: "\21B3"; position: absolute; left: -1.3rem; top: .8rem;
+                            color: var(--media); font-weight: 800; font-size: 1.1rem; }
+      .msg.debate .m-route .arrow { color: var(--media); }
+      .debate-tag { display: inline-flex; align-items: center; gap: .3rem; font-size: .64rem; font-weight: 800;
+                    text-transform: uppercase; letter-spacing: .04em; color: #b45309; background: #fef3c7;
+                    border: 1px solid #fde68a; border-radius: 999px; padding: .08rem .45rem; }
 
       .report-final { display: grid; gap: 1rem; }
       .report-final .rf-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem 1.3rem; }
@@ -412,55 +421,14 @@
       <!-- Vista del modo agentic -->
       <section id="agentic" class="hidden">
 
-        <!-- 1. Arquitectura MCP -->
-        <div class="ag-block">
-          <h3>&#127959;&#65039; Arquitectura MCP del sistema</h3>
-          <p class="sub">Cliente MCP, servidor MCP, herramientas, agentes, evidencia y reporte final.</p>
-          <div class="arch">
-            <div class="arch-row">
-              <div class="arch-node client">
-                <div class="t">Cliente MCP</div>
-                <div class="v">Webapp FastAPI</div>
-                <div class="d">Orquesta agentes y consume las herramientas del servidor por stdio.</div>
-              </div>
-              <div class="arch-node server">
-                <div class="t">Servidor MCP</div>
-                <div class="v">guardrails-auditor</div>
-                <div class="d">Guardrail: solo lee muestras y escribe reportes. Nunca ejecuta el codigo auditado.</div>
-                <div id="arch-tools" class="arch-tags"></div>
-              </div>
-            </div>
-            <div class="arch-flow">&#9660;</div>
-            <div class="arch-row">
-              <div class="arch-node agent"><div class="t">Agente 1</div><div class="v">&#128228; Recoleccion</div><div class="d">Lee codigo y dependencias via MCP.</div></div>
-              <div class="arch-node agent"><div class="t">Agente 2 &middot; 3 (paralelo)</div><div class="v">&#128737;&#65039; Seguridad / &#128230; Dependencias</div><div class="d">Hallazgos de vulnerabilidades y librerias riesgosas.</div></div>
-              <div class="arch-node agent"><div class="t">Agente 4</div><div class="v">&#9989; Validador</div><div class="d">Confirma o descarta cada hallazgo (anti-alucinacion).</div></div>
-              <div class="arch-node agent"><div class="t">Agente 5</div><div class="v">&#128221; Reporte</div><div class="d">Prioriza riesgos y recomienda.</div></div>
-            </div>
-            <div class="arch-flow">&#9660;</div>
-            <div class="arch-row">
-              <div class="arch-node evidence">
-                <div class="t">Evidencia utilizada</div>
-                <div class="v">&#128196; Codigo + hashes + dependencias</div>
-                <div class="d">Mensajes estructurados con evidencia trazable entre agentes.</div>
-              </div>
-              <div class="arch-node report">
-                <div class="t">Reporte final</div>
-                <div class="v">&#128202; Markdown con validacion humana</div>
-                <div class="d">Problema, hallazgos, riesgos priorizados, recomendaciones y limitaciones.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Herramientas MCP -->
+        <!-- Herramientas MCP -->
         <div class="ag-block">
           <h3>&#128295; Herramientas MCP disponibles</h3>
           <p class="sub">Expuestas por el servidor y llamadas por los agentes durante el analisis.</p>
           <div id="tools-grid" class="tools-grid"></div>
         </div>
 
-        <!-- 3. Pipeline de agentes -->
+        <!-- Pipeline de agentes -->
         <div class="section-title">Agentes trabajando &middot; Seguridad y Dependencias corren en paralelo</div>
         <div id="agent-pipeline" class="agentic-pipeline"></div>
 
@@ -489,53 +457,12 @@
 
         <div id="cards-head-agentic" class="cards-head hidden">
           <span class="section-title">Reporte final del sistema agentic</span>
-          <button id="downloadbtn-agentic" class="download">&#11015; Descargar reporte agentic .md</button>
-        </div>
-        <div id="report-final" class="report-final"></div>
-
-        <!-- 7. Vibe Coding -->
-        <div id="vibe-block" class="ag-block hidden">
-          <h3>&#129302; Como se construyo con Vibe Coding</h3>
-          <p class="sub">Documentacion del uso de IA para construir y endurecer el sistema (requisito 5).</p>
-          <div class="vibe-grid">
-            <div class="vibe-card prompts">
-              <h4>&#128172; Prompts principales</h4>
-              <ul>
-                <li>"Convierte el auditor de un solo paso en 5 agentes que conversen sobre MCP."</li>
-                <li>"El Validador debe marcar cada hallazgo como CONFIRMADO, FALSO_POSITIVO o REVISION_HUMANA."</li>
-                <li>"Corre Seguridad y Dependencias en paralelo con asyncio y transmite todo en vivo a la UI."</li>
-                <li>"Detecta dependencias inventadas (slopsquatting) con un catalogo determinista."</li>
-              </ul>
-            </div>
-            <div class="vibe-card errors">
-              <h4>&#9888;&#65039; Errores encontrados</h4>
-              <ul>
-                <li>El LLM inventaba hallazgos sin respaldo en el codigo (alucinaciones).</li>
-                <li>Importacion circular entre el orquestador y los agentes.</li>
-                <li>Metricas inconsistentes mezclando hallazgos con validaciones.</li>
-                <li>Un rename dejo una variable usada pero no declarada en una muestra.</li>
-              </ul>
-            </div>
-            <div class="vibe-card fixes">
-              <h4>&#128296; Correcciones del grupo</h4>
-              <ul>
-                <li>Se agrego el Agente Validador que cruza cada hallazgo contra el codigo real.</li>
-                <li>Se movio <code>resumen_para_reporte</code> a un modulo comun.</li>
-                <li>Se separaron las metricas: hallazgos, validaciones, confirmados y FP.</li>
-                <li>Revision humana del codigo generado antes de aceptarlo.</li>
-              </ul>
-            </div>
-            <div class="vibe-card security">
-              <h4>&#128272; Decisiones de seguridad</h4>
-              <ul>
-                <li>El servidor MCP <strong>nunca ejecuta</strong> el codigo auditado, solo lo lee.</li>
-                <li><code>_safe_resolve()</code> evita path traversal fuera de las carpetas permitidas.</li>
-                <li>Escritura restringida a <code>output/</code> y solo extensiones permitidas.</li>
-                <li>Todo termina en <strong>validacion humana</strong>: la IA no actua sola.</li>
-              </ul>
-            </div>
+          <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+            <button id="viewbtn-agentic" class="download" style="background:var(--deps)">&#128279; Ver reporte HTML</button>
+            <button id="downloadbtn-agentic" class="download">&#11015; Descargar .md</button>
           </div>
         </div>
+        <div id="report-final" class="report-final"></div>
       </section>
 
       <section id="metrics" class="metrics hidden"></section>
@@ -582,21 +509,22 @@
       const reportFinal = document.getElementById("report-final");
       const cardsHeadAgentic = document.getElementById("cards-head-agentic");
       const downloadbtnAgentic = document.getElementById("downloadbtn-agentic");
-      const archTools = document.getElementById("arch-tools");
+      const viewbtnAgentic = document.getElementById("viewbtn-agentic");
       const toolsGrid = document.getElementById("tools-grid");
       const consoleBody = document.getElementById("console-body");
       const consoleLive = document.getElementById("console-live");
-      const vibeBlock = document.getElementById("vibe-block");
       const toolCalls = {};
 
       let mode = "clasico";
       let agenticReportMd = "";
+      let agenticReportHtml = "";
       const AGENT_ICONS = {
         "Agente de Recoleccion": "📥",
         "Agente de Seguridad": "🛡️",
         "Agente de Dependencias": "📦",
         "Agente Validador": "✅",
         "Agente de Reporte": "📝",
+        "Analista humano": "👤",
       };
 
       const SEVERITIES = ["CRITICA", "ALTA", "MEDIA", "BAJA"];
@@ -727,11 +655,12 @@
         agenticMetrics.innerHTML = "";
         reportFinal.innerHTML = "";
         cardsHeadAgentic.classList.add("hidden");
+        viewbtnAgentic.classList.add("hidden");
+        agenticReportMd = "";
+        agenticReportHtml = "";
         consoleBody.innerHTML = "";
         consoleLive.classList.add("hidden");
         toolsGrid.innerHTML = "";
-        archTools.innerHTML = "";
-        vibeBlock.classList.add("hidden");
         for (const k in toolCalls) delete toolCalls[k];
         statusEl.textContent = "";
       }
@@ -1083,9 +1012,6 @@
             </div>`
           )
           .join("");
-        archTools.innerHTML = tools
-          .map((t) => `<span class="arch-tag">${esc(t.name)}()</span>`)
-          .join("");
       }
 
       function markToolUsed(name) {
@@ -1098,7 +1024,7 @@
         calls.textContent = `×${toolCalls[name]}`;
       }
 
-      function appendMessage(m) {
+      function appendMessage(m, kind) {
         const conf = typeof m.confianza === "number" ? Math.round(m.confianza * 100) : null;
         const cc = typeof m.confianza === "number" ? confClass(m.confianza) : "mid";
         let payloadHtml = "";
@@ -1128,7 +1054,8 @@
         rows.push(`<div class="m-row"><div class="k">Siguiente accion</div><div class="v next">${esc(m.siguiente_accion || "—")}</div></div>`);
 
         const div = document.createElement("div");
-        div.className = "msg";
+        div.className = kind === "debate" ? "msg debate" : "msg";
+        const debateTag = kind === "debate" ? `<span class="debate-tag">↔ debate</span>` : "";
         div.innerHTML = `
           <div class="m-head">
             <div class="m-route">
@@ -1136,7 +1063,10 @@
               <span class="arrow">&rarr;</span>
               ${agentBadge(m.para)}
             </div>
-            <span class="m-time">${esc(fmtTime(m.timestamp))}</span>
+            <div style="display:flex;align-items:center;gap:.5rem">
+              ${debateTag}
+              <span class="m-time">${esc(fmtTime(m.timestamp))}</span>
+            </div>
           </div>
           <div class="m-grid">${rows.join("")}</div>
           ${payloadHtml}`;
@@ -1312,7 +1242,7 @@
             setAgentState(ev.agent, ev.state, ev.file);
             break;
           case "message":
-            appendMessage(ev.message || {});
+            appendMessage(ev.message || {}, ev.kind);
             break;
           case "file_done":
             statusEl.innerHTML = `<span class="spinner"></span>Archivo procesado: ${esc(ev.file || "")}`;
@@ -1322,8 +1252,9 @@
             if (ev.metrics) renderAgenticMetrics(ev.metrics);
             renderFinalReport(ev.report, ev.files);
             agenticReportMd = ev.report_md || "";
+            agenticReportHtml = ev.report_html || "";
             cardsHeadAgentic.classList.toggle("hidden", !agenticReportMd);
-            vibeBlock.classList.remove("hidden");
+            viewbtnAgentic.classList.toggle("hidden", !agenticReportHtml);
             consoleLive.classList.add("hidden");
             break;
           case "error":
@@ -1344,6 +1275,23 @@
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
+      });
+
+      viewbtnAgentic.addEventListener("click", () => {
+        if (!agenticReportHtml) return;
+        const blob = new Blob([agenticReportHtml], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const w = window.open(url, "_blank");
+        if (!w) {
+          // Bloqueo de pop-ups: descarga como fallback.
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "reporte-agentic.html";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
       });
     </script>
   </body>

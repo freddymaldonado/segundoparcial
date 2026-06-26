@@ -241,18 +241,41 @@
 
       .convo { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem 1.2rem; margin-bottom: 1.5rem; }
       .convo h3 { margin: 0 0 .8rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-      .convo-feed { display: grid; gap: .55rem; max-height: 360px; overflow-y: auto; }
-      .msg { border: 1px solid var(--line); border-left: 4px solid var(--deps); border-radius: 0 10px 10px 0;
-             padding: .6rem .85rem; background: var(--bg); animation: slidein .3s ease; }
+      .convo-feed { display: grid; gap: .7rem; max-height: 520px; overflow-y: auto; padding-right: .3rem; }
+      .msg { border: 1px solid var(--line); border-left: 4px solid var(--deps); border-radius: 0 12px 12px 0;
+             padding: .85rem 1rem; background: var(--bg); animation: slidein .3s ease; }
       @keyframes slidein { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; } }
-      .msg .m-route { font-size: .82rem; font-weight: 800; }
-      .msg .m-route .arrow { color: var(--deps); margin: 0 .35rem; }
-      .msg .m-task { font-size: .8rem; color: #334155; margin: .2rem 0; }
-      .msg .m-foot { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap;
-                     font-size: .76rem; color: var(--muted); margin-top: .25rem; }
-      .msg .m-result { color: var(--ink); font-weight: 600; }
-      .msg .conf { font-variant-numeric: tabular-nums; font-weight: 800; }
+      .msg .m-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+                     flex-wrap: wrap; margin-bottom: .55rem; }
+      .msg .m-route { font-size: .9rem; font-weight: 800; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+      .msg .m-route .who { display: inline-flex; align-items: center; gap: .3rem; }
+      .msg .m-route .arrow { color: var(--deps); font-size: 1.05rem; }
+      .msg .m-time { font-size: .68rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+      .msg .m-grid { display: grid; gap: .4rem; }
+      .msg .m-row { display: grid; grid-template-columns: 130px 1fr; gap: .6rem; align-items: start; font-size: .82rem; }
+      @media (max-width: 620px) { .msg .m-row { grid-template-columns: 1fr; gap: .1rem; } }
+      .msg .m-row .k { color: var(--muted); font-weight: 700; text-transform: uppercase;
+                       letter-spacing: .03em; font-size: .68rem; padding-top: .12rem; }
+      .msg .m-row .v { color: var(--ink); line-height: 1.45; }
+      .msg .m-row .v.task { font-weight: 600; }
+      .msg .m-row .v.result { font-weight: 700; }
+      .msg .m-row .v.next { color: var(--deps); font-weight: 600; }
+      .msg .conf-bar { display: flex; align-items: center; gap: .5rem; }
+      .msg .conf-track { flex: 1; max-width: 180px; height: 7px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+      .msg .conf-fill { height: 100%; border-radius: 999px; }
+      .msg .conf-fill.hi { background: var(--baja); } .msg .conf-fill.mid { background: var(--media); } .msg .conf-fill.lo { background: var(--crit); }
+      .msg .conf { font-variant-numeric: tabular-nums; font-weight: 800; font-size: .82rem; }
       .msg .conf.hi { color: var(--baja); } .msg .conf.mid { color: var(--media); } .msg .conf.lo { color: var(--crit); }
+      .msg details.payload { margin-top: .5rem; }
+      .msg details.payload summary { cursor: pointer; font-size: .72rem; font-weight: 700; color: var(--deps);
+                                     list-style: none; user-select: none; }
+      .msg details.payload summary::-webkit-details-marker { display: none; }
+      .msg details.payload summary::before { content: "\25B8 "; }
+      .msg details.payload[open] summary::before { content: "\25BE "; }
+      .msg details.payload pre { margin: .45rem 0 0; padding: .6rem .7rem; background: #0f172a; color: #e2e8f0;
+                                 border-radius: 8px; font-size: .72rem; line-height: 1.45; overflow-x: auto;
+                                 font-family: ui-monospace, monospace; white-space: pre-wrap; word-break: break-word; }
+      .msg .a-badge { font-weight: 800; }
 
       .report-final { display: grid; gap: 1rem; }
       .report-final .rf-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem 1.3rem; }
@@ -318,6 +341,10 @@
 
         <div class="convo">
           <h3>Conversacion entre agentes (en vivo)</h3>
+          <p class="mode-hint" style="margin:-.4rem 0 .8rem">
+            Cada mensaje sigue el protocolo estructurado: <strong>emisor &rarr; receptor</strong>, tarea solicitada,
+            evidencia usada, resultado, nivel de confianza y siguiente accion.
+          </p>
           <div id="convo-feed" class="convo-feed"></div>
         </div>
 
@@ -815,17 +842,62 @@
         return "lo";
       }
 
+      function fmtTime(ts) {
+        if (!ts) return "";
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return "";
+        return d.toLocaleTimeString("es-ES", { hour12: false });
+      }
+
+      function agentBadge(name) {
+        if (!name) return "?";
+        const ico = AGENT_ICONS[name] || "🤖";
+        const short = name.replace("Agente de ", "").replace("Agente ", "");
+        return `<span class="who"><span>${ico}</span><span class="a-badge">${esc(short)}</span></span>`;
+      }
+
       function appendMessage(m) {
         const conf = typeof m.confianza === "number" ? Math.round(m.confianza * 100) : null;
+        const cc = typeof m.confianza === "number" ? confClass(m.confianza) : "mid";
+        let payloadHtml = "";
+        if (m.payload && Object.keys(m.payload).length) {
+          payloadHtml = `
+            <details class="payload">
+              <summary>Ver evidencia estructurada (payload)</summary>
+              <pre>${esc(JSON.stringify(m.payload, null, 2))}</pre>
+            </details>`;
+        }
+        const rows = [];
+        rows.push(`<div class="m-row"><div class="k">Tarea solicitada</div><div class="v task">${esc(m.tarea || "—")}</div></div>`);
+        rows.push(`<div class="m-row"><div class="k">Evidencia usada</div><div class="v">${esc(m.evidencia || "—")}</div></div>`);
+        rows.push(`<div class="m-row"><div class="k">Resultado</div><div class="v result">${esc(m.resultado || "—")}</div></div>`);
+        if (conf != null) {
+          rows.push(`
+            <div class="m-row">
+              <div class="k">Nivel de confianza</div>
+              <div class="v">
+                <div class="conf-bar">
+                  <div class="conf-track"><div class="conf-fill ${cc}" style="width:${conf}%"></div></div>
+                  <span class="conf ${cc}">${conf}%</span>
+                </div>
+              </div>
+            </div>`);
+        }
+        rows.push(`<div class="m-row"><div class="k">Siguiente accion</div><div class="v next">${esc(m.siguiente_accion || "—")}</div></div>`);
+
         const div = document.createElement("div");
         div.className = "msg";
         div.innerHTML = `
-          <div class="m-route">${esc(m.de || "?")}<span class="arrow">&rarr;</span>${esc(m.para || "?")}</div>
-          <div class="m-task">${esc(m.tarea || "")}</div>
-          <div class="m-foot">
-            <span class="m-result">${esc(m.resultado || "")}</span>
-            ${conf != null ? `<span class="conf ${confClass(m.confianza)}">${conf}% confianza</span>` : ""}
-          </div>`;
+          <div class="m-head">
+            <div class="m-route">
+              ${agentBadge(m.de)}
+              <span class="arrow">&rarr;</span>
+              ${agentBadge(m.para)}
+            </div>
+            <span class="m-time">${esc(fmtTime(m.timestamp))}</span>
+          </div>
+          <div class="m-grid">${rows.join("")}</div>
+          ${payloadHtml}`;
         convoFeed.appendChild(div);
         convoFeed.scrollTop = convoFeed.scrollHeight;
       }
